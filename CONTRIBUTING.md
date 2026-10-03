@@ -1,4 +1,4 @@
-# Contributing to window-ai
+# Contributing to Browser AI Lab
 
 Thanks for helping improve the on-device AI showcase! This guide covers local setup, how the demos are structured, code style, and what to check before you push.
 
@@ -10,7 +10,7 @@ Thanks for helping improve the on-device AI showcase! This guide covers local se
 ## Setup
 
 ```bash
-git clone git@github.com:danduh/window-ai.git
+git clone https://github.com/jordanboyce/window-ai.git
 cd window-ai
 npm install
 ```

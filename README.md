@@ -1,10 +1,8 @@
-# window-ai
+# Browser AI Lab
 
-**A live showcase of Chrome's built-in, on-device AI** — the Prompt API (`LanguageModel`), `Summarizer`, `Translator` / `LanguageDetector`, `Writer` / `Rewriter`, and `Proofreader` — plus **WebMCP** (`document.modelContext`) and a Model Context Protocol reference implementation.
+**Browser AI Lab** is a hands-on showcase of Chrome's built-in, on-device AI — the Prompt API (`LanguageModel`), `Summarizer`, `Translator` / `LanguageDetector`, `Writer` / `Rewriter`, and `Proofreader` — plus **WebMCP** (`document.modelContext`) and a Model Context Protocol reference implementation.
 
-🔗 **Live demo → [windowai.danduh.me](https://windowai.danduh.me)**
-
-Everything runs **in the browser, on-device** via Chrome's built-in Gemini Nano: no backend, no API keys, no per-request cost, and no data leaving the machine.
+AI processing runs **in the browser, on-device** via Chrome's built-in Gemini Nano. Prompts and results are not sent to an app backend or AI service; there are no API keys or per-request model costs.
 
 ---
 
@@ -31,7 +29,7 @@ This is an [Nx](https://nx.dev) monorepo.
 |---|---|---|
 | **`chat/`** | React 19 SPA — the built-in-AI demo gallery + WebMCP demos | `nx serve chat` → http://localhost:4300 |
 | **`map/`** | **Cross-Border Desk** — on-device payments copilot demo | `nx serve map` → http://localhost:4200 |
-| **`chrome-llm-ts/`** | Publishable npm library [`@danduh/chrome-llm-ts`](https://www.npmjs.com/package/@danduh/chrome-llm-ts) — TypeScript types for `window.ai` | — |
+| **`chrome-llm-ts/`** | TypeScript library with types for Chrome's built-in AI APIs | — |
 | **`mcp/`** | Reference Model Context Protocol server (stdio) | — |
 | **`mcp-client/`** | Express HTTP API + CLI wrapping an MCP client | — |
 | **`devops/awsweb/`** | AWS CDK infrastructure (S3 + CloudFront + Route53) | — |

@@ -1,10 +1,8 @@
 // Google Analytics Configuration
 export const ANALYTICS_CONFIG = {
-  // Google Analytics Measurement ID
-  GA_MEASUREMENT_ID: 'G-ZC3N8B4VGB',
-  
-  // Enable/disable analytics based on environment
-  ENABLED: typeof process !== 'undefined' ? process.env.NODE_ENV === 'production' : true,
+  // Visitor analytics is disabled for self-hosted classroom deployments.
+  GA_MEASUREMENT_ID: '',
+  ENABLED: false,
   
   // Debug mode for development
   DEBUG: typeof process !== 'undefined' ? process.env.NODE_ENV === 'development' : false,

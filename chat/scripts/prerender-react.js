@@ -5,12 +5,13 @@ const path = require('path');
 
 // Mock DOM environment for server-side rendering
 const { JSDOM } = require('jsdom');
+const siteUrl = process.env.SITE_URL?.replace(/\/+$/, '');
 
 // Create JSDOM instance
 const dom = new JSDOM(
   '<!DOCTYPE html><html><head></head><body><div id="root"></div></body></html>',
   {
-    url: 'https://windowai.danduh.me',
+    url: siteUrl || 'https://example.invalid',
     pretendToBeVisual: false,
     resources: 'usable',
   },
@@ -147,18 +148,17 @@ async function prerenderRoutes() {
 function getSEODataForRoute(routePath) {
   const seoConfigs = {
     '/': {
-      title:
-        'Chrome Built-in AI — on-device AI APIs in your browser | window.ai',
+      title: 'Browser AI Lab — Chrome built-in AI demos and guides',
       description:
-        "The window.ai showcase: run Gemini Nano and Chrome's built-in AI APIs entirely on-device — prompt, summarize, translate, write, embed, and Model Context Protocol tools. Live interactive demos and developer docs, no server, no API key.",
+        "Explore hands-on demos and developer guides for Chrome's built-in, on-device AI APIs — chat, summarize, translate, write, embed, and use Model Context Protocol tools.",
       keywords:
-        'window.ai, Chrome built-in AI, Gemini Nano, on-device AI, browser AI APIs, LanguageModel, Prompt API, Summarizer, Translator, Writer, Rewriter, embeddings, Model Context Protocol, MCP',
+        'Browser AI Lab, Chrome built-in AI, Gemini Nano, on-device AI, browser AI APIs, LanguageModel, Prompt API, Summarizer, Translator, Writer, Rewriter, embeddings, Model Context Protocol, MCP',
       structuredData: {
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
-        name: 'window.ai — Chrome Built-in AI Showcase',
+        name: 'Browser AI Lab',
         description:
-          "Live demos and documentation for Chrome's on-device built-in AI APIs (window.ai / Gemini Nano)",
+          "Hands-on demos and developer guides for Chrome's built-in, on-device AI APIs (Gemini Nano)",
         applicationCategory: 'DeveloperApplication',
         operatingSystem: 'Chrome Browser',
       },
@@ -604,8 +604,7 @@ function getSEODataForRoute(routePath) {
 }
 
 function createEnhancedHTML(htmlTemplate, seoData, routePath) {
-  const baseUrl = 'https://windowai.danduh.me';
-  const fullUrl = `${baseUrl}${routePath}`;
+  const fullUrl = siteUrl ? `${siteUrl}${routePath}` : '';
 
   // Update title
   let html = htmlTemplate.replace(
@@ -634,12 +633,12 @@ function createEnhancedHTML(htmlTemplate, seoData, routePath) {
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="${fullUrl}">
+    ${siteUrl ? `<meta property="og:url" content="${fullUrl}">` : ''}
     <meta property="og:title" content="${seoData.title}">
     <meta property="og:description" content="${seoData.description}">
-    <meta property="og:site_name" content="window.ai">
-    <meta property="og:image" content="${baseUrl}/assets/Social_Card-selection.png">
-    <meta property="og:image:secure_url" content="${baseUrl}/assets/Social_Card-selection.png">
+    <meta property="og:site_name" content="Browser AI Lab">
+    ${siteUrl ? `<meta property="og:image" content="${siteUrl}/assets/Social_Card-selection.png">` : ''}
+    ${siteUrl ? `<meta property="og:image:secure_url" content="${siteUrl}/assets/Social_Card-selection.png">` : ''}
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1928">
     <meta property="og:image:height" content="1260">
@@ -647,16 +646,15 @@ function createEnhancedHTML(htmlTemplate, seoData, routePath) {
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="${fullUrl}">
+    ${siteUrl ? `<meta property="twitter:url" content="${fullUrl}">` : ''}
     <meta property="twitter:title" content="${seoData.title}">
     <meta property="twitter:description" content="${seoData.description}">
-    <meta property="twitter:image" content="${baseUrl}/assets/Social_Card-selection.png">
+    ${siteUrl ? `<meta property="twitter:image" content="${siteUrl}/assets/Social_Card-selection.png">` : ''}
     
     <!-- Additional SEO -->
-    <link rel="canonical" href="${fullUrl}">
+    ${siteUrl ? `<link rel="canonical" href="${fullUrl}">` : ''}
     <meta name="robots" content="index, follow">
     <meta name="language" content="English">
-    <meta name="author" content="Chrome AI APIs Demo">
     
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -667,19 +665,11 @@ function createEnhancedHTML(htmlTemplate, seoData, routePath) {
   // Inject meta tags before closing head tag
   html = html.replace('</head>', `${metaTags}</head>`);
 
-  // Add preload hints for critical resources
-  const preloadHints = `
-    <link rel="preconnect" href="${baseUrl}">
-    <link rel="dns-prefetch" href="${baseUrl}">
-  `;
-
-  html = html.replace('<head>', `<head>${preloadHints}`);
-
   return html;
 }
 
 function createSitemap() {
-  const baseUrl = 'https://windowai.danduh.me';
+  if (!siteUrl) return;
   const lastmod = new Date().toISOString().split('T')[0];
 
   // Only list canonical, 200-returning content URLs. Deliberately excluded:
@@ -698,7 +688,7 @@ function createSitemap() {
     .map(
       (p) => `
   <url>
-    <loc>${baseUrl}${p}</loc>
+    <loc>${siteUrl}${p}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>${priority(p)}</priority>
@@ -712,14 +702,8 @@ function createSitemap() {
 }
 
 function createRobotsTxt() {
-  // Always the production origin — matches createSitemap()'s baseUrl so the
-  // Sitemap directive is discoverable by crawlers.
-  const baseUrl = 'https://windowai.danduh.me';
-
   const robotsTxt = `User-agent: *
-Allow: /
-
-Sitemap: ${baseUrl}/sitemap.xml`;
+Allow: /${siteUrl ? `\n\nSitemap: ${siteUrl}/sitemap.xml` : ''}`;
 
   fs.writeFileSync(path.join(distPath, 'robots.txt'), robotsTxt);
   console.log('✓ Generated robots.txt');

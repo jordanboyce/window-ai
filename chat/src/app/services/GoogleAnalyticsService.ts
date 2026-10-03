@@ -33,6 +33,8 @@ class GoogleAnalyticsService {
   }
 
   private checkInitialization(): void {
+    if (!this.isEnabled) return;
+
     // Check if gtag is available
     if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
       this.isInitialized = true;

@@ -97,7 +97,7 @@ export const SidebarRail: React.FC = () => {
         {/* Logo tile + wordmark — links home */}
         <Link
           to="/"
-          title="Window.AI"
+          title="Browser AI Lab"
           onClick={() => {
             trackUserInteraction('navigation_click', 'logo_home');
             closeOnMobile();
@@ -116,7 +116,7 @@ export const SidebarRail: React.FC = () => {
               className="font-display whitespace-nowrap text-base font-bold"
               style={{ color: 'var(--fg)' }}
             >
-              Window.AI
+              Browser AI Lab
             </span>
           )}
         </Link>

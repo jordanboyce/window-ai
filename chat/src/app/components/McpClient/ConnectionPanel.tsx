@@ -170,7 +170,7 @@ const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
           No server handy? Clone the{' '}
           <a
-            href="https://github.com/danduh/window-ai"
+            href="https://github.com/jordanboyce/window-ai"
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
