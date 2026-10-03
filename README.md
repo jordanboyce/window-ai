@@ -55,7 +55,9 @@ npm test                          # workspace Vitest tests
 ## Host and teach from this fork
 
 1. Run `npm ci && npm run build:demo`. The built gallery in `dist/chat/` is a static SPA; host it **at the domain root** on HTTPS. Do not upload `node_modules/` or use the Nx development server as your public host.
-2. Firebase Hosting is configured in [`firebase.json`](firebase.json) to publish `dist/chat` and rewrite deep links to `index.html`. After creating your own Firebase project and logging in, deploy with `npx firebase-tools deploy --only hosting --project YOUR_PROJECT_ID`. This repository does not include Firebase credentials or a site ID.
+2. Firebase Hosting is configured in [`firebase.json`](firebase.json) to publish `dist/chat`, rewrite deep links to `index.html`, and deploy only the `browser-ai-lab` target. [`.firebaserc`](.firebaserc) maps that target to the `browser-ai-lab` site in `cyberlion-sites-d0500`. After logging in, deploy locally with `npx firebase-tools deploy --only hosting:browser-ai-lab --project cyberlion-sites-d0500`. Reusing this fork for another site requires updating the project and target mappings. Firebase credentials are not committed.
+
+   The GitHub workflows install Node 24, run `npm ci`, execute tests, and build with `npm run build:chat` (local Nx). Pushes to `main` deploy the live site; same-repository pull requests deploy preview channels. The Firebase service-account key is stored in the repository's `FIREBASE_SERVICE_ACCOUNT_CYBERLION_SITES_D0500` secret, not in source control.
 3. On another static host, make all unknown paths rewrite to `/index.html` (for example, Netlify's `/* /index.html 200`, or nginx's `try_files $uri $uri/ /index.html;`). Set the site's publish directory to `dist/chat`. Serving the gallery under a subpath needs corresponding router and asset-base changes.
 4. Share the HTTPS URL ending in `/status`. The **Three-minute demo path** starts with live capability checks, then translation, then a sample Recipe Workbench that can still be browsed without Gemini Nano. Each feature has an API documentation tab. Press **P** for presentation mode on a demo page; press **Esc** to exit.
 

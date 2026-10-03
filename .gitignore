@@ -72,12 +72,13 @@ web_modules/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variable files
+# dotenv secrets (keep example/template files trackable)
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+!.env.*.example
 
 ai-docs/site
 
@@ -152,9 +153,32 @@ design/**/fonts/
 # Local-only MCP dev helper — references an internal gateway URL, keep out of this public repo
 mcp-cors-proxy.mjs
 
-.nx/cache
-.nx/workspace-data
+# Nx local cache, daemon, and workspace state
+.nx/
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# Local agent tooling installed by CLI helpers
+/.agents/
+/.claude/skills/
+/.claude/settings.local.json
+/skills-lock.json
+
+# Firebase local cache and downloaded credentials
+# Keep firebase.json, .firebaserc, and GitHub workflows in version control.
+.firebase/
+*-firebase-adminsdk-*.json
+*service-account*.json
+*service_account*.json
+
+# Test/report output and infrastructure build output
+test-results/
+playwright-report/
+blob-report/
+cdk.out/
+
+# Windows filesystem metadata
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "cyberlion-sites-d0500"
+  },
+  "targets": {
+    "cyberlion-sites-d0500": {
+      "hosting": {
+        "browser-ai-lab": ["browser-ai-lab"]
+      }
+    }
+  }
+}
