@@ -2,15 +2,9 @@
 
 ## Prerequisites
 
-### Enable Gemini Nano and the Prompt API
+### Enable the Prompt API in Canary (if needed)
 
-Follow these steps to enable Gemini Nano and the Prompt API flags for local experimentation:
-1. Open a new tab in Chrome, go to chrome://flags/#optimization-guide-on-device-model
-2. Select Enabled BypassPerfRequirement 
-   - This bypass performance checks which might get in the way of having Gemini Nano downloaded on your device.
-3. Go to chrome://flags/#prompt-api-for-gemini-nano
-4. Select Enabled
-5. Relaunch Chrome.
+The Prompt API is available on desktop Chrome 148+ without a flag. For Canary experiments, if `LanguageModel` is missing, set `chrome://flags/#prompt-api` to **Enabled** and relaunch. The old on-device-model bypass flag has been removed; Chrome manages model download and hardware eligibility.
 
 ### Confirm availability of Gemini Nano
 1. Open DevTools and send `await LanguageModel.availability();` in the console.
@@ -114,14 +108,12 @@ In addition to the `initialPrompts` option shown above, the currently-configurab
 
 ```js
 const customSession = await LanguageModel.create({
-  outputLanguage: 'en',
   temperature: 0.8,
   topK: 10
 });
 
 const params = await LanguageModel.params();
 const slightlyHighTemperatureSession = await LanguageModel.create({
-  outputLanguage: 'en',
   temperature: Math.max(
     params.defaultTemperature * 1.2,
     params.maxTemperature
@@ -314,17 +306,19 @@ LanguageModel.params(): Promise<{ defaultTopK: number; maxTopK: number; defaultT
 LanguageModel.create(options?): Promise<LanguageModel>;
 
 interface LanguageModelCreateOptions {
-  outputLanguage?: string;                 // e.g. 'en' — recommended in Chrome 147+
   temperature?: number;
   topK?: number;
   initialPrompts?: { role: "system" | "user" | "assistant"; content: string }[];
-  responseFormat?: object;                 // JSON Schema for structured output
+  expectedInputs?: { type: "text" | "image" | "audio"; languages?: string[] }[];
+  expectedOutputs?: { type: "text" | "image" | "audio"; languages?: string[] }[];
   monitor?: (m: { addEventListener(type: "downloadprogress", cb: (e: ProgressEvent) => void): void }) => void;
   signal?: AbortSignal;
 }
 
 // Session (the instance returned by create())
 session.prompt(input, options?): Promise<string>;
+// Structured output: constrain per-call (NOT at create() time)
+session.prompt(input, { responseConstraint: JSON_SCHEMA });
 session.promptStreaming(input, options?): ReadableStream<string>;
 session.measureInputUsage(input, options?): Promise<number>;
 session.clone(options?): Promise<LanguageModel>;

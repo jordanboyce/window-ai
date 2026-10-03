@@ -11,23 +11,13 @@ The Summarization API provides on-device text summarization capabilities with su
 ### Browser Support
 
 1. **Summarization API**:
-    - Stable since Chrome 138 on desktop (current stable: Chrome 150, July 2026)
+    - Stable since Chrome 138 on desktop
     - Supported platforms: Windows, Mac, and Linux
     - Requires at least 22GB free storage for model download
 
 ### Setup Instructions
 
-1. **Enable Gemini Nano Model**:
-    ```
-    chrome://flags/#optimization-guide-on-device-model
-    ```
-    Set to `Enabled` with `BypassPerfRequirement` and restart Chrome.
-
-2. **Enable Summarization API**:
-    ```
-    chrome://flags/#summarization-api-for-gemini-nano
-    ```
-    Set to `Enabled` and restart Chrome.
+Summarizer is stable since Chrome 138 and needs no flag. If you are testing an experimental Canary build where it is disabled, the current flag is `chrome://flags/#summarizer-api`. Chrome handles model download on first use; the old model performance-bypass flag is no longer available.
 
 ### Checking API Availability
 
@@ -101,7 +91,7 @@ const keyPoints = await keyPointsSummarizer.summarize(`
 #### TL;DR Summary
 ```javascript
 const tldrSummarizer = await Summarizer.create({
-  type: "tl;dr",
+  type: "tldr",
   length: "short"
 });
 
@@ -178,7 +168,7 @@ meetingSummarizer.destroy();
 const multilingualSummarizer = await Summarizer.create({
   expectedInputLanguages: ["en", "es", "fr"],
   outputLanguage: "en",
-  type: "tl;dr",
+  type: "tldr",
   sharedContext: "International customer support tickets requiring executive review"
 });
 
@@ -342,7 +332,7 @@ const availability: AvailabilityStatus = await checkSummaryAvailability({
 
 // Streaming
 const stream: ReadableStream<string> = await summarizeTextStreaming(longText, {
-  type: "tl;dr"
+  type: "tldr"
 });
 ```
 

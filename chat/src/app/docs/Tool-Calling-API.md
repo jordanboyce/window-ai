@@ -1,52 +1,63 @@
 # Tool Calling API Documentation
 
-The Chrome AI Tool Calling API allows language models to interact with external functions, enabling powerful integrations with your application's capabilities.
+> **⚠️ API change (Chrome 157).** `LanguageModel.create({ tools: [{ execute }] })` — native tool auto-execution — was **removed** from the Prompt API. This document's `tools` array examples are historical and no longer run. The current approach: constrain the model to emit a JSON tool call with **`responseConstraint`** (passed per `session.prompt()` call), then execute the tool in your own JavaScript and feed the result back. See [the current approach](#the-current-approach-responseconstraint-dispatch-loop) below.
+
+The Chrome AI Prompt API lets the on-device model call into your application's capabilities via a host-side dispatch loop.
 
 ## Overview
 
-Tool calling enables the AI model to:
-- Execute JavaScript functions when needed
+The pattern enables the AI model to:
+- Emit a structured request to run a JavaScript function
 - Access external data sources
 - Perform calculations and computations
 - Interact with APIs and services
 - Provide real-time information
 
-## Basic Usage
+## The current approach: `responseConstraint` dispatch loop
 
-### Creating a Session with Tools
+`responseConstraint` is a stable structured-output option you pass to **each `prompt()` call** (not to `create()`). It constrains the model to emit a single JSON object, which your code parses and dispatches.
 
 ```javascript
+const INTENT_SCHEMA = {
+  type: 'object',
+  required: ['toolName'],
+  additionalProperties: false,
+  properties: {
+    toolName: { type: 'string', description: 'Tool to call next, or "done".' },
+    args: { type: 'object', description: 'Arguments for the tool.' },
+    reply: { type: 'string', description: 'Final answer, only when toolName is "done".' },
+  },
+};
+
+const tools = {
+  getWeather: async ({ location }) =>
+    JSON.stringify({ location, temperature: '22°C', condition: 'Sunny' }),
+};
+
 const session = await LanguageModel.create({
   initialPrompts: [{
-    role: "system",
-    content: "You are a helpful assistant with access to various tools."
+    role: 'system',
+    content: 'You call tools by emitting JSON: { "toolName": "...", "args": {...}, "reply": "..." }.',
   }],
-  tools: [
-    {
-      name: "getWeather",
-      description: "Get the weather in a location.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          location: {
-            type: "string",
-            description: "The city to check for weather condition.",
-          },
-        },
-        required: ["location"],
-      },
-      async execute({ location }) {
-        const response = await fetch(`https://api.weather.com/v1/current?location=${location}`);
-        return JSON.stringify(await response.json());
-      },
-    }
-  ]
 });
+
+async function run(userMessage) {
+  let turn = userMessage;
+  for (let i = 0; i < 8; i++) {
+    const raw = await session.prompt(turn, { responseConstraint: INTENT_SCHEMA });
+    const intent = JSON.parse(raw.trim());
+    if (intent.toolName === 'done') return intent.reply;
+    const result = await tools[intent.toolName](intent.args ?? {});
+    turn = `Tool "${intent.toolName}" result: ${result}. Now decide the next step.`;
+  }
+  return 'Max tool calls reached.';
+}
 ```
 
 ### Tool Definition Structure
 
-Each tool must include:
+Each tool is an ordinary async function plus a JSON Schema describing its input:
+
 
 - **name**: Unique identifier for the tool
 - **description**: What the tool does (used by AI to decide when to call it)

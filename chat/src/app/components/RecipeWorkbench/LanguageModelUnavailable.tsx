@@ -1,4 +1,5 @@
 import React from 'react';
+import type { ToolRegistrationStatus } from './ToolRegistrationPill';
 
 /**
  * Inline yellow banner shown INSIDE the AgentDrawer when
@@ -11,7 +12,7 @@ import React from 'react';
  * - chat-specific heading + body copy (UI-SPEC §5 / §Copywriting)
  * - no flag table (the page-level banner already shows the flag instructions)
  */
-export const LanguageModelUnavailable: React.FC = () => (
+export const LanguageModelUnavailable: React.FC<{ registrationStatus: ToolRegistrationStatus }> = ({ registrationStatus }) => (
   <div
     className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
     role="status"
@@ -27,10 +28,12 @@ export const LanguageModelUnavailable: React.FC = () => (
       </svg>
       <div>
         <p className="text-yellow-800 dark:text-yellow-200 font-medium">
-          Chrome built-in AI isn't available.
+          Chrome's Prompt API isn't ready for the in-page assistant.
         </p>
         <p className="text-yellow-700 dark:text-yellow-300 text-sm mt-1">
-          The recipe tools are still registered (try the Tool Inspector). To run the in-page agent, enable Chrome built-in AI in Chrome 146+ Canary.
+          {registrationStatus === 'success' || registrationStatus === 'partial'
+            ? 'Some recipe tools are registered for compatible external agents. The in-page chat needs a ready Prompt API; it uses the same handlers directly.'
+            : 'The recipe browser still works, but WebMCP tools are not registered here. The in-page chat also needs a ready Prompt API. Check the browser setup above.'}
         </p>
       </div>
     </div>

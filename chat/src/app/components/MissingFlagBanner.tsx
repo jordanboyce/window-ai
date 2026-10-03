@@ -9,9 +9,9 @@ export interface MissingFlagBannerProps {
 
 export const MissingFlagBanner: React.FC<MissingFlagBannerProps> = ({
   title = "WebMCP isn't enabled in this browser.",
-  body = 'The recipe browser still works. To register tools and run the agent demo, open this page in Chrome 146+ Canary with the WebMCP flag enabled.',
-  flags = [{ name: 'WebMCP', url: 'chrome://flags/#WebMCP', note: 'set to "For testing"' }],
-  browserRequirement = 'Chrome 146+ Canary',
+  body = 'The recipe browser still works. To register tools and run the agent demo, enable WebMCP in Chrome Canary and relaunch.',
+  flags = [{ name: 'WebMCP', url: 'chrome://flags/#enable-webmcp-testing', note: 'set to "Enabled"' }],
+  browserRequirement = 'Chrome 149+ Canary',
 }) => (
   <div
     className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
@@ -43,9 +43,14 @@ export const MissingFlagBanner: React.FC<MissingFlagBannerProps> = ({
           {flags.map((flag) => (
             <div key={flag.url}>
               <span className="text-yellow-700 dark:text-yellow-300">Flag:</span>{' '}
-              <code className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded font-mono text-sm">
+              <a
+                href={flag.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded font-mono text-sm underline decoration-gray-400 hover:decoration-gray-600 dark:decoration-gray-500"
+              >
                 {flag.url}
-              </code>
+              </a>
               {flag.note != null && <>{' '}({flag.note})</>}
             </div>
           ))}

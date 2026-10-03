@@ -30,7 +30,7 @@ The page is the trust boundary. Anything the page's JavaScript can do — read I
 WebMCP is available in:
 
 - **Chrome 149+** — public **origin trial** (register your origin for a token), or enable `chrome://flags/#enable-webmcp-testing` for local dev.
-- **Chrome 146–148 Canary** — behind the flag only (`chrome://flags/#WebMCP for testing`, set to "For testing").
+- **Chrome 146–148 Canary** — older builds used a differently named WebMCP experiment. For current Canary use `chrome://flags/#enable-webmcp-testing`.
 - **Microsoft Edge 147+** (added March 2026).
 
 Other browsers do not implement WebMCP. On those, the Recipe Workbench page in this site shows a yellow banner (see `chat/src/app/components/MissingFlagBanner.tsx`) explaining how to enable it; the recipe browser itself stays usable for read-only browsing.
@@ -254,7 +254,7 @@ const session = await LanguageModel.create({
 // the external Tool Inspector and the in-page chat gain it for free.
 ```
 
-> **In this demo specifically.** The Recipe Workbench's in-page agent (`chat/src/app/components/RecipeWorkbench/AgentDrawer.tsx`) uses a `responseFormat`-driven JSON dispatch loop instead of `LanguageModel.create({ tools })`, because Chrome 147 Canary's `LanguageModel` tool-calling codepath was unreliable at the time of writing. The Prompt API's `tools` parameter is documented and functional as of the Chrome 148 stable release, so this workaround is no longer strictly required — but it still works, and swapping it is optional. The same `RECIPE_TOOLS` array drives both surfaces — only the in-page invocation transport differs. A reusable adapter exists at `chat/src/app/services/toolAdapter.ts` (export name `toLanguageModelTools`, plural) for the `tools`-based path.
+> **In this demo specifically.** The Recipe Workbench's in-page agent (`chat/src/app/components/RecipeWorkbench/AgentDrawer.tsx`) uses a `responseConstraint`-driven JSON dispatch loop rather than native tool auto-execution. Structured output is constrained per `session.prompt()` call (`{ responseConstraint: INTENT_SCHEMA }`), and the host JS executes the named tool and feeds the result back. Native `LanguageModel.create({ tools })` auto-execution was removed from the API surface in recent Chrome, so this manual loop is the supported approach. The same `RECIPE_TOOLS` array drives both surfaces — only the in-page invocation transport differs.
 
 ### Why hand-roll the adapter?
 
@@ -311,6 +311,6 @@ The realistic risk is a malicious page convincing the user to install or trust a
 
 - W3C WebMCP Draft Community Group Report — https://webmachinelearning.github.io/webmcp/ (snapshot: April 23, 2026)
 - WebMCP repository — https://github.com/webmachinelearning/webmcp
-- Chrome flag — `chrome://flags/#enable-webmcp-testing` (Chrome 149+ origin trial; older Canary 146–148 used `#WebMCP for testing`)
+- Chrome flag — `chrome://flags/#enable-webmcp-testing` (Chrome 149+ origin trial; older Canary 146–148 used a differently named experiment)
 - In-app fallback — `chat/src/app/components/MissingFlagBanner.tsx`
 - Tool source of truth — `chat/src/app/services/recipeTools.ts` (the `RECIPE_TOOLS` array driving Sample 2)

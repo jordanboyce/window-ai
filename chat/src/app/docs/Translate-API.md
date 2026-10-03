@@ -15,7 +15,7 @@ Both APIs support streaming responses, download progress monitoring, and proper 
 ### Browser Support
 
 1. **Language Detection API**:
-    - Stable since Chrome 138 (current stable: Chrome 150, July 2026)
+    - Stable since Chrome 138
     - Supported platforms: Android, ChromeOS, Windows, Mac, and Linux (not iOS)
     - No special hardware requirements
 
@@ -26,19 +26,9 @@ Both APIs support streaming responses, download progress monitoring, and proper 
 
 ### Setup Instructions
 
-1. **Enable Language Detection API**:
-    ```
-    chrome://flags/#language-detection-api
-    ```
-    Set to `Enabled` and restart Chrome.
+Language Detector and Translator are stable since Chrome 138; neither needs a `chrome://flags` toggle in Canary 157. Check availability for the requested language pair and allow the pack to download.
 
-2. **Enable Translation API**:
-    ```
-    chrome://flags/#translation-api
-    ```
-    Set to `Enabled` (or `Enabled without language pack limit` for more languages) and restart Chrome.
-
-3. **Manage Language Packs** (Optional):
+**Manage Language Packs** (optional):
     ```
     chrome://on-device-translation-internals/
     ```

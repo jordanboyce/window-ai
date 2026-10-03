@@ -105,13 +105,13 @@ const ctx = await chromium.launchPersistentContext(NANO_PROFILE, {
 });
 const page = await ctx.newPage();
 const output = await page.evaluate(async (text) => {
-  const s = await LanguageModel.create({ outputLanguage: 'en' });
+  const s = await LanguageModel.create({ expectedOutputs: [{ type: 'text', languages: ['en'] }] });
   const r = await s.prompt(text); s.destroy(); return r;
 }, input);
 // …then score `output` and compute the stability rate in Node (Vitest, etc.)
 ```
 
-Enable the model once in that profile's `chrome://flags` (`#optimization-guide-on-device-model`, `#prompt-api-for-gemini-nano`, …) and let it download — a pre-warmed profile is far more reliable than command-line flags.
+If `LanguageModel` is missing in Canary, enable `chrome://flags/#prompt-api` and relaunch. Allow the model to download in that profile — a pre-warmed profile is more reliable than command-line flags.
 
 ### The honest CI verdict
 

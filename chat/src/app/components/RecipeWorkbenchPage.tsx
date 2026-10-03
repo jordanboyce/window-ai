@@ -21,6 +21,7 @@ import { getModelContext, isModelContextAvailable, registerToolSafely } from '..
 import { subscribeRecipeStore, setActiveRecipeId } from '../services/recipeStore';
 import { ToolRegistrationPill, type ToolRegistrationStatus } from './RecipeWorkbench/ToolRegistrationPill';
 import { AgentDrawer } from './RecipeWorkbench/AgentDrawer';
+import { WorkbenchExplainer } from './RecipeWorkbench/WorkbenchExplainer';
 
 interface WorkbenchPanelProps {
   recipes: Recipe[];
@@ -314,6 +315,7 @@ export const RecipeWorkbenchPage: React.FC = () => {
         </header>
 
         {!isModelContextAvailable() && <MissingFlagBanner />}
+        <WorkbenchExplainer />
 
         <Tabs basePath="/webmcp" defaultTab="docs" tabs={tabs} />
       </div>

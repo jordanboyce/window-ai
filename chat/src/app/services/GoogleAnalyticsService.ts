@@ -29,7 +29,7 @@ class GoogleAnalyticsService {
   private isInitialized = false;
 
   constructor() {
-    this.checkInitialization();
+    if (this.isEnabled && this.GA_MEASUREMENT_ID) this.checkInitialization();
   }
 
   private checkInitialization(): void {

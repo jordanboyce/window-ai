@@ -1,7 +1,11 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { vi } from 'vitest';
 
 import App from './app';
+
+// jsdom doesn't implement layout or scrolling.
+Element.prototype.scrollIntoView = vi.fn();
 
 describe('App', () => {
   it('should render successfully', () => {
@@ -13,14 +17,13 @@ describe('App', () => {
     expect(baseElement).toBeTruthy();
   });
 
-  it('should have a greeting as the title', () => {
-    const { getAllByText } = render(
+  it('shows the Cross-Border Desk title and offline demo prompt', () => {
+    render(
       <BrowserRouter>
         <App />
       </BrowserRouter>,
     );
-    expect(
-      getAllByText(new RegExp('Welcome map', 'gi')).length > 0,
-    ).toBeTruthy();
+    expect(screen.getByText('Cross-Border Desk')).toBeTruthy();
+    expect(screen.getByText(/Offline and ready\. Drop an invoice/)).toBeTruthy();
   });
 });

@@ -15,23 +15,11 @@ const PILLS: { label: string; href: string }[] = [
   { label: 'Write & Rewrite', href: '/writer' },
 ];
 
-// Words the hero headline cycles through via the typewriter morph.
-const MORPH_WORDS = [
-  'chat.',
-  'summarize.',
-  'translate.',
-  'embed.',
-  'proofread.',
-  'see images.',
-];
-
-const GITHUB_URL = 'https://github.com/jordanboyce/window-ai';
 
 export const HomePage: React.FC = () => {
   useSEOData(seoConfigs.home, '/');
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const morphRef = useRef<HTMLSpanElement>(null);
 
   // Canvas scanning-grid animation. Self-contained rAF loop + resize handler,
   // all torn down on unmount via an `alive` guard.
@@ -99,80 +87,6 @@ export const HomePage: React.FC = () => {
     };
   }, []);
 
-  // Typewriter morph on the gradient headline word. Mutates textContent via a
-  // ref (no per-keystroke re-render). Every timeout is tracked and cleared, and
-  // the `alive` guard prevents any DOM write after unmount.
-  useEffect(() => {
-    const el = morphRef.current;
-    if (!el) return;
-
-    let alive = true;
-    const timers = new Set<ReturnType<typeof setTimeout>>();
-
-    const wait = (ms: number) =>
-      new Promise<void>((res) => {
-        const t = setTimeout(() => {
-          timers.delete(t);
-          res();
-        }, ms);
-        timers.add(t);
-      });
-
-    const type = (text: string, speed: number) =>
-      new Promise<void>((res) => {
-        let i = 0;
-        const step = () => {
-          if (!alive) return res();
-          el.textContent = text.slice(0, ++i);
-          if (i < text.length) {
-            const t = setTimeout(() => {
-              timers.delete(t);
-              step();
-            }, speed);
-            timers.add(t);
-          } else res();
-        };
-        step();
-      });
-
-    const del = (text: string, speed: number) =>
-      new Promise<void>((res) => {
-        let i = text.length;
-        const step = () => {
-          if (!alive) return res();
-          el.textContent = text.slice(0, --i);
-          if (i > 0) {
-            const t = setTimeout(() => {
-              timers.delete(t);
-              step();
-            }, speed);
-            timers.add(t);
-          } else res();
-        };
-        step();
-      });
-
-    const run = async () => {
-      let k = 0;
-      await wait(500);
-      while (alive) {
-        const wd = MORPH_WORDS[k % MORPH_WORDS.length];
-        await type(wd, 65);
-        await wait(1500);
-        await del(wd, 34);
-        await wait(250);
-        k++;
-      }
-    };
-    run();
-
-    return () => {
-      alive = false;
-      timers.forEach((t) => clearTimeout(t));
-      timers.clear();
-    };
-  }, []);
-
   return (
     <div className="landing-root">
       <canvas ref={canvasRef} className="landing-canvas" />
@@ -208,17 +122,7 @@ export const HomePage: React.FC = () => {
           <Link to="/status" className="landing-nav-link">
             Demos
           </Link>
-          <a
-            href={GITHUB_URL}
-            title="GitHub"
-            target="_blank"
-            rel="noreferrer"
-            className="landing-social"
-          >
-            <svg width="18" height="18" viewBox="0 0 496 512" fill="currentColor">
-              <path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8" />
-            </svg>
-          </a>
+
         </div>
       </div>
 
@@ -226,18 +130,22 @@ export const HomePage: React.FC = () => {
       <div className="landing-hero">
         <div className="landing-badge">
           <span className="landing-badge-dot" />
-          ONE ENGINE · MANY APIS
+          REAL BROWSER APIS · REAL RESULTS
         </div>
         <h1 className="landing-h1">
-          The browser
-          <br />
-          that can <span ref={morphRef} className="landing-morph" />
-          <span className="landing-cursor" />
+          AI that runs <span className="landing-morph">in your browser.</span>
         </h1>
         <p className="landing-subtitle">
-          A whole suite of built-in AI APIs on Gemini Nano — pick a capability and it
-          just runs, locally. No backend, no API keys, no data leaving your machine.
+          This page calls your browser's built-in APIs. Chrome provides the model or
+          language pack; you see the real result—or a clear reason it cannot run.
+          The core demos need no app-server AI or API key.
         </p>
+        <div className="landing-explainer" aria-label="How this demo works">
+          <div><strong>01 · Your input</strong><span>Enter a sentence, image, or prompt.</span></div>
+          <div><strong>02 · Browser API</strong><span>The browser processes it with a downloaded model or language pack.</span></div>
+          <div><strong>03 · Real output</strong><span>See the result and whether this browser supports the feature.</span></div>
+        </div>
+        <p className="landing-why"><strong>Why it matters:</strong> These APIs can keep eligible tasks on your device instead of sending your input to an app's AI server. Support, downloads, and flags vary by API.</p>
         <div className="landing-cta-row">
           <Link to="/status" className="landing-cta-primary">
             Check your browser
@@ -254,8 +162,8 @@ export const HomePage: React.FC = () => {
               <path d="M5 12h14M13 6l6 6-6 6" />
             </svg>
           </Link>
-          <Link to="/status" className="landing-cta-secondary">
-            Explore the demos
+          <Link to="/translate/translate-demo" className="landing-cta-secondary">
+            Try translation
           </Link>
         </div>
       </div>

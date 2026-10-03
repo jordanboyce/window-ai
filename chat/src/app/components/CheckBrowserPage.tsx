@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSEOData, seoConfigs } from '../hooks/useSEOData';
 import { ApiStatusGrid } from './ApiStatus';
+import { DemoTrail } from './DemoTrail';
 import { useShell } from './AppShell/ShellContext';
 import './CheckBrowserPage.css';
 
@@ -181,12 +182,10 @@ export const CheckBrowserPage: React.FC = () => {
               color: 'var(--fg2)',
             }}
           >
-            Chrome ships a set of built-in AI APIs that run{' '}
-            <strong style={{ color: 'var(--fg)' }}>on-device</strong> via Gemini Nano — no
-            backend, no API keys, no per-request cost, and no data leaving the browser. Some
-            are stable, others are in an origin trial or behind a flag. The status on each card
-            below is checked{' '}
-            <strong style={{ color: 'var(--fg)' }}>live in your current browser</strong>.
+            On this page, availability is checked against <strong style={{ color: 'var(--fg)' }}>your current browser</strong>—not a prerecorded result.
+            Start with the path below: inspect readiness, run a translation, then compare ordinary recipe browsing with WebMCP tool registration.
+            The core built-in AI demos do not send input to an app AI server or require an API key; optional remote MCP and voice demos may use the network.
+            A feature may need a model download, a supported language pair, or a flag, so an unavailable card is a setup finding, not a failed AI answer.
           </p>
           <div
             style={{
@@ -221,12 +220,13 @@ export const CheckBrowserPage: React.FC = () => {
           </div>
           {!present && (
             <p style={{ margin: '1.2em 0 0', fontSize: '.84em', color: 'var(--fg3)' }}>
-              Requires a desktop Chrome 150+ (Windows, macOS, Linux) that meets the Gemini Nano
-              hardware bar (~22&nbsp;GB free disk, &gt;4&nbsp;GB VRAM or 16&nbsp;GB RAM). After
-              enabling a flag, relaunch Chrome.
+              Built-in APIs vary in browser support and model requirements. Use the live cards below for each API; if you change a flag, relaunch Chrome and check again.
             </p>
           )}
         </div>
+
+        {/* A first-run path for classes and shared demos. */}
+        {!present && <DemoTrail />}
 
         {/* Live API status cards (self-checked availability — do not hardcode) */}
         <ApiStatusGrid />
@@ -329,7 +329,7 @@ export const CheckBrowserPage: React.FC = () => {
                 color: 'var(--fg3)',
               }}
             >
-              Status verified against the Chrome for Developers docs (July 2026, Chrome 150).
+              Flag IDs checked against Chromium 157.0.8081.0 (October 2026).
               These APIs are evolving — flags and availability can change between releases.
             </p>
 

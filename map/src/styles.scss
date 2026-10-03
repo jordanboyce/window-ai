@@ -2,37 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Payoneer Marketing Design System — type + tokens ──────────────────────
-   Fonts copied from the design handoff bundle (Avenir Next World OTFs).
-   Only the 4 weights the Cross-Border Desk uses are bundled. */
-@font-face {
-  font-family: 'Avenir Next World';
-  src: url('./assets/fonts/AvenirNextWorld-Regular.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Avenir Next World';
-  src: url('./assets/fonts/AvenirNextWorld-Medium.otf') format('opentype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Avenir Next World';
-  src: url('./assets/fonts/AvenirNextWorld-Demi.otf') format('opentype');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Avenir Next World';
-  src: url('./assets/fonts/AvenirNextWorld-Bold.otf') format('opentype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
+/* Font files are served from /assets/fonts via the static assets copy rule.
+   Keep the @font-face URLs in index.html so Windows CSS tooling does not
+   turn local font paths into broken absolute drive-path module requests. */
 
 :root {
   --font-family-base: 'Avenir Next World', 'Avenir Next LT Pro', ui-sans-serif,

@@ -3,9 +3,11 @@ import React, {useState} from 'react';
 interface ChatInputProps {
   onSend: (message: string, action: "Prompt" | "Translate") => void;
   disabled?: boolean;
+  /** When true, show a spinner in the send button (model is working). */
+  isLoading?: boolean;
 }
 
-const ChatInput: React.FC<ChatInputProps> = ({onSend, disabled = false}) => {
+const ChatInput: React.FC<ChatInputProps> = ({onSend, disabled = false, isLoading = false}) => {
   const [input, setInput] = useState<string>('');
 
   const handleSend = () => {
@@ -50,9 +52,16 @@ const ChatInput: React.FC<ChatInputProps> = ({onSend, disabled = false}) => {
           disabled={!input.trim() || disabled}
           className="bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500 flex items-center justify-center min-w-[80px]"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-          </svg>
+          {isLoading ? (
+            <svg className="w-5 h-5 animate-spin motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" aria-label="Generating">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+          )}
         </button>
       </div>
     </div>

@@ -65,13 +65,8 @@ export const EmbeddingsPage: React.FC = () => {
         {unavailable && (
           <MissingFlagBanner
             title="Embeddings API isn't enabled in this browser."
-            body="Enable the flags below in Chrome 152+ Canary (desktop only), then relaunch."
+            body="Enable the flag below in Chrome 152+ Canary (desktop only), then relaunch."
             flags={[
-              {
-                name: 'Optimization Guide On Device',
-                url: 'chrome://flags/#optimization-guide-on-device-model',
-                note: 'set to "Enabled BypassPerfRequirement"',
-              },
               {
                 name: 'Semantic Embedder API',
                 url: 'chrome://flags/#semantic-embedder-api',

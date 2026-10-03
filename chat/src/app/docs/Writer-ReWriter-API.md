@@ -16,27 +16,21 @@ Both APIs support streaming responses, availability checking, and advanced confi
 ### Browser Support
 
 1. **Writer & Rewriter APIs**:
-    - Still origin trial / behind a flag on desktop — not yet stable as of Chrome 150. Enable on localhost via `chrome://flags/#writer-api-for-gemini-nano` and `#rewriter-api-for-gemini-nano`
+    - Developer trial / behind flags on desktop in Chrome Canary 157. Enable on localhost via `chrome://flags/#writer-api` and `chrome://flags/#rewriter-api`.
     - Supported platforms: Windows, Mac, and Linux
     - Requires at least 22GB free storage for model download
 
 ### Setup Instructions
 
-1. **Enable Gemini Nano Model**:
+1. **Enable Writer API**:
     ```
-    chrome://flags/#optimization-guide-on-device-model
-    ```
-    Set to `Enabled` with `BypassPerfRequirement` and restart Chrome.
-
-2. **Enable Writer API**:
-    ```
-    chrome://flags/#writer-api-for-gemini-nano
+    chrome://flags/#writer-api
     ```
     Set to `Enabled` and restart Chrome.
 
-3. **Enable Rewriter API**:
+2. **Enable Rewriter API**:
     ```
-    chrome://flags/#rewriter-api-for-gemini-nano
+    chrome://flags/#rewriter-api
     ```
     Set to `Enabled` and restart Chrome.
 

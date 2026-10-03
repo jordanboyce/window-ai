@@ -32,7 +32,7 @@ export const describeChatError = (error: unknown): string => {
   const name = (error as { name?: string })?.name;
   switch (name) {
     case 'NotSupportedError':
-      return "This browser can't run the Prompt API (Gemini Nano) yet. Use Chrome Canary, or enable chrome://flags/#prompt-api-for-gemini-nano and #optimization-guide-on-device-model, then reload.";
+      return "This browser can't run the Prompt API (Gemini Nano) yet. Use Chrome 148+ on desktop, or enable chrome://flags/#prompt-api in Canary and relaunch.";
     case 'InvalidStateError':
       return 'The on-device model session was reset by the browser. Please send your message again.';
     case 'NotReadableError':
@@ -89,9 +89,14 @@ export const zeroShot = async (
     session = null;
   }
   if (!session) {
+    // Chrome 157: `outputLanguage` was removed from LanguageModel.create().
+    // Output language is now declared via expectedOutputs.
     const createOptions = systemPrompt
-      ? { outputLanguage: 'en', initialPrompts: [{ role: 'system' as const, content: systemPrompt }] }
-      : { outputLanguage: 'en' };
+      ? {
+          expectedOutputs: [{ type: 'text' as const, languages: ['en'] }],
+          initialPrompts: [{ role: 'system' as const, content: systemPrompt }],
+        }
+      : { expectedOutputs: [{ type: 'text' as const, languages: ['en'] }] };
 
     session = await LanguageModel.create(createOptions);
   }

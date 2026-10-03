@@ -18,10 +18,10 @@ import {
  *
  * Cloned from RecipeWorkbench/AgentDrawer.tsx and adapted for a REMOTE MCP
  * server whose tool set is discovered at connect() time. Owns a plain
- * `LanguageModel.create({ responseFormat: INTENT_SCHEMA, outputLanguage: 'en' })`
- * session (NO `tools` array — that codepath is broken on Chrome 147). Tool
- * calls are extracted from the schema-constrained JSON response and dispatched
- * to `props.callTool` (which proxies to McpClientService.callTool), one per
+ * `LanguageModel.create({ initialPrompts: [...] })` session (NO `tools` array —
+ * native auto-execution was removed from the Prompt API). Tool calls are
+ * constrained to JSON via per-call `responseConstraint` and dispatched to
+ * `props.callTool` (which proxies to McpClientService.callTool), one per
  * prompt turn, capped at MAX_TOOL_CALLS.
  *
  * The system prompt lists the connected server's tools, so the session is
@@ -110,8 +110,6 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ tools, callTool, connected }) => 
         }
         setUnavailable(false);
         const newSession = await LanguageModel.create({
-          outputLanguage: 'en',
-          responseFormat: INTENT_SCHEMA,
           initialPrompts: [{ role: 'system', content: buildSystemPrompt(tools) }],
         });
         if (cancelled) {
@@ -175,7 +173,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ tools, callTool, connected }) => 
       // Dispatch loop: prompt → parse → execute tool → feed result → repeat.
       // Exits when the model emits toolName "done" or MAX_TOOL_CALLS is hit.
       while (callCount < MAX_TOOL_CALLS) {
-        const rawResponse = await session.prompt(promptText);
+        const rawResponse = await session.prompt(promptText, {
+          responseConstraint: INTENT_SCHEMA,
+        });
         if (!aliveRef.current) return;
 
         const parsed = extractJsonFromResponse(rawResponse);
@@ -257,18 +257,13 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ tools, callTool, connected }) => 
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Agent Chat</h2>
         <MissingFlagBanner
           title="Chrome built-in AI (Gemini Nano) isn't available."
-          body="The connection and Tool Inspector still work without it. To run the in-page agent chat, enable the Prompt API for Gemini Nano in Chrome 138+ (Canary/Dev)."
-          browserRequirement="Chrome 138+ (Prompt API for Gemini Nano)"
+          body="The connection and Tool Inspector still work without it. To run the in-page agent chat, use Chrome 148+ or enable the Prompt API flag in Canary."
+          browserRequirement="Chrome 148+ (desktop) or Canary with Prompt API enabled"
           flags={[
             {
               name: 'Prompt API',
-              url: 'chrome://flags/#prompt-api-for-gemini-nano',
+              url: 'chrome://flags/#prompt-api',
               note: 'set to "Enabled"',
-            },
-            {
-              name: 'Optimization Guide',
-              url: 'chrome://flags/#optimization-guide-on-device-model',
-              note: 'set to "Enabled BypassPerfRequirement"',
             },
           ]}
         />
@@ -298,7 +293,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ tools, callTool, connected }) => 
         calls them one at a time to answer your request.
       </p>
 
-      <ChatBox messages={messages} />
+      <ChatBox messages={messages} isLoading={isLoading} />
 
       {toolEvents.map((event, i) => (
         <ToolCallIndicator key={i} event={event} />
@@ -332,7 +327,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ tools, callTool, connected }) => 
         </div>
       )}
 
-      <ChatInput onSend={handleUserMessage} disabled={inputDisabled} />
+      <ChatInput onSend={handleUserMessage} disabled={inputDisabled} isLoading={isLoading} />
     </div>
   );
 };

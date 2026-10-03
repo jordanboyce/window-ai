@@ -21,19 +21,13 @@ A session is **language-scoped**: each one targets one or more `expectedInputLan
 
 ### Setup Instructions
 
-1. **Enable the on-device model**:
-   ```
-   chrome://flags/#optimization-guide-on-device-model
-   ```
-   Set to **Enabled BypassPerfRequirement** and restart Chrome.
-
-2. **Enable the Proofreader API**:
+1. **Enable the Proofreader API**:
    ```
    chrome://flags/#proofreader-api
    ```
    Set to **Enabled** and restart Chrome.
 
-3. **Inspect model state** (optional, useful for debugging stalled downloads):
+2. **Inspect model state** (optional, useful for debugging stalled downloads):
    ```
    chrome://on-device-internals
    ```

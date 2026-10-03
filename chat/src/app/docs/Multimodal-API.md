@@ -20,7 +20,7 @@ Multimodal mode is unlocked by passing `expectedInputs: [{ type: 'image' }, { ty
 On stable Chrome 148+ there is nothing to configure. On Canary, if multimodal isn't yet available, enable:
 
 ```
-chrome://flags/#prompt-api-for-gemini-nano-multimodal-input
+chrome://flags/#prompt-api-multimodal-input
 ```
 
 Set to **Enabled** and restart. Confirm with `await LanguageModel.availability({ expectedInputs: [{ type: 'image' }] })`.

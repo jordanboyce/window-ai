@@ -86,8 +86,6 @@ const INTENT_SCHEMA = {
 };
 
 const session = await LanguageModel.create({
-  outputLanguage: 'en',              // required on Chrome 147+ to avoid a warning/throw
-  responseFormat: INTENT_SCHEMA,     // constrains output to the JSON intent shape
   initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT }],
 });
 ```
@@ -99,7 +97,8 @@ const MAX_TOOL_CALLS = 10;   // guard against runaway loops
 let turn = userMessage;
 
 for (let i = 0; i < MAX_TOOL_CALLS; i++) {
-  const raw = await session.prompt(turn);
+  // Structured output is constrained PER-CALL in Chrome 157 (responseConstraint).
+  const raw = await session.prompt(turn, { responseConstraint: INTENT_SCHEMA });
   const intent = extractJsonFromResponse(raw);   // strips ```json fences, then parses
 
   if (!intent || intent.toolName === 'done') {
@@ -113,9 +112,9 @@ for (let i = 0; i < MAX_TOOL_CALLS; i++) {
 }
 ```
 
-`extractJsonFromResponse` exists because Chrome's `responseFormat` sometimes still wraps the JSON in ```` ```json ```` fences despite the schema constraint; the helper tries a raw `JSON.parse` first, then strips fences, then falls back to extracting the first `{ ... }` block. The loop exits when the model emits `toolName: "done"` (with a `reply`) or when it hits `MAX_TOOL_CALLS`.
+`extractJsonFromResponse` exists because even with a `responseConstraint` schema the model sometimes wraps the JSON in ```` ```json ```` fences; the helper tries a raw `JSON.parse` first, then strips fences, then falls back to extracting the first `{ ... }` block. The loop exits when the model emits `toolName: "done"` (with a `reply`) or when it hits `MAX_TOOL_CALLS`.
 
-> **Note.** The Prompt API's native `tools` parameter is documented and reportedly functional on later Chrome stable builds. If you're on a recent Chrome and want to try native tool calling, that's the cleaner path — but the `responseFormat` loop above works across every build that ships the Prompt API, which is why this demo keeps it.
+> **Note.** Native Prompt API tool auto-execution (`LanguageModel.create({ tools })`) was removed from the API surface in recent Chrome. The `responseConstraint` dispatch loop above is the supported path — constrain output per call, then execute tools in host JS.
 
 ## CORS: the thing that will bite you
 

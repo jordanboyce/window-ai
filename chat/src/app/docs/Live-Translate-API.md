@@ -36,19 +36,13 @@ if (!SpeechRecognitionCtor) {
 }
 
 if (typeof Translator === "undefined") {
-  console.warn("Translator API not available — enable chrome://flags/#translation-api");
+  console.warn("Translator API not available — use supported desktop Chrome and check the language pair");
 }
 ```
 
-### Setup — Translator Flag (if needed)
+### Setup — Translator
 
-If `Translator` is undefined on a Chrome that should support it:
-
-```
-chrome://flags/#translation-api
-```
-
-Set to **Enabled** (or **Enabled without language pack limit** for more pairs) and restart. Manage installed packs at `chrome://on-device-translation-internals/`.
+Translator is available without a flag since Chrome 138. If it is undefined, check browser support and secure-context requirements. Manage installed language packs at `chrome://on-device-translation-internals/`.
 
 ### Checking Translator Availability for a Pair
 

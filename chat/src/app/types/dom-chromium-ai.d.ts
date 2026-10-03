@@ -11,14 +11,7 @@ declare global {
   interface LanguageModelCreateOptions {
     topK?: number;
     temperature?: number;
-    /**
-     * Chrome 147 Canary — specifies the output language for the model session.
-     * Required (or strongly recommended) in Chrome 147+ to ensure optimal output
-     * quality and attest to output safety. Supported values: 'en', 'es', 'ja'.
-     * Omitting this causes a console warning and may degrade output quality
-     * (e.g., model wrapping JSON in markdown code fences despite responseFormat,
-     * hallucinating IDs, or emitting fewer tool calls per turn).
-     */
+    /** @deprecated Removed in Chrome 157 — use `expectedOutputs` instead. */
     outputLanguage?: string;
     expectedInputs?: Array<{
       type: "text" | "image" | "audio" | "tool-call" | "tool-response";
@@ -41,12 +34,9 @@ declare global {
       content: string;
     }>;
     /**
-     * Chrome 147 Canary — JSON-Schema-shaped output constraint that activates
-     * tool-use. When `tools` is also provided, the model auto-invokes the
-     * matching tool's `execute` and the prompt() response is the tool's
-     * stringified return value. See chat/src/app/components/ToolCallingPage.tsx
-     * for the working precedent (the W3C `expectedInputs/expectedOutputs`
-     * shape is not yet implemented in 147).
+     * @deprecated Chrome 157 renamed this to `responseConstraint`, which is now
+     * passed per-call to prompt()/promptStreaming() (NOT at create() time).
+     * create()-time responseFormat is silently ignored by current Canary.
      */
     responseFormat?: object;
   }
@@ -56,8 +46,8 @@ declare global {
     static availability(options?: Partial<LanguageModelCreateOptions>): Promise<"unavailable" | "downloadable" | "downloading" | "available">;
     static params(): Promise<LanguageModelParams>;
 
-    prompt(input: string, options?: { signal?: AbortSignal }): Promise<string>;
-    promptStreaming(input: string, options?: { signal?: AbortSignal }): ReadableStream<string>;
+    prompt(input: string, options?: { signal?: AbortSignal; responseConstraint?: object }): Promise<string>;
+    promptStreaming(input: string, options?: { signal?: AbortSignal; responseConstraint?: object }): ReadableStream<string>;
 
     readonly inputUsage: number;
     readonly inputQuota: number;

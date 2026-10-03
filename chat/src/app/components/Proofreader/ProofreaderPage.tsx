@@ -8,6 +8,7 @@ import { ProofreaderHeader } from './ProofreaderHeader';
 import { ProofreaderForm } from './ProofreaderForm';
 import { ProofreaderOutputModeToggle, type OutputMode } from './ProofreaderOutputModeToggle';
 import { ProofreaderResultPanel } from './ProofreaderResultPanel';
+import { Spinner } from '../Spinner';
 import {
   getAvailability,
   proofread,
@@ -182,7 +183,13 @@ export const ProofreaderPage: React.FC = () => {
         </div>
       )}
       <div className="mt-6">
-        <ProofreaderOutputModeToggle mode={mode} onChange={onModeChange} />
+        {pageState === 'proofreading' ? (
+          <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
+            <Spinner label="Proofreading on-device…" />
+          </div>
+        ) : (
+          <ProofreaderOutputModeToggle mode={mode} onChange={onModeChange} />
+        )}
       </div>
       <ProofreaderResultPanel
         result={result}
@@ -220,13 +227,8 @@ export const ProofreaderPage: React.FC = () => {
         {pageState === 'unavailable' && (
           <MissingFlagBanner
             title="Proofreader API isn't enabled in this browser."
-            body="Enable the flags below in Chrome Canary, then reload."
+            body="Enable the flag below in Chrome Canary, then relaunch."
             flags={[
-              {
-                name: 'Optimization Guide On Device',
-                url: 'chrome://flags/#optimization-guide-on-device-model',
-                note: 'set to "Enabled BypassPerfRequirement"',
-              },
               {
                 name: 'Proofreader API',
                 url: 'chrome://flags/#proofreader-api',

@@ -24,7 +24,7 @@ export interface EvalCase {
   /** Plain-language description of the rule the output must satisfy. */
   rule: string;
   /** Summarizer type, when api === 'summarizer'. */
-  summaryType?: 'tl;dr' | 'key-points' | 'teaser' | 'headline';
+  summaryType?: 'tldr' | 'key-points' | 'teaser' | 'headline';
   /** Deterministic scorer — regular code, no model involved. */
   check: (output: string) => CheckResult;
 }
@@ -49,7 +49,7 @@ export const EVAL_CASES: EvalCase[] = [
     id: 'summary-short',
     name: 'Summary is short',
     api: 'summarizer',
-    summaryType: 'tl;dr',
+    summaryType: 'tldr',
     input: SAMPLE,
     rule: 'non-empty and ≤ 40 words',
     check: (o) => {

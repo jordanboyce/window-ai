@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { addSink, isTracingEnabled, traceCall, traceStream } from './tracer';
 import type { AiSpan } from './types';
 
@@ -114,13 +114,19 @@ describe('observability tracer', () => {
 });
 
 describe('isTracingEnabled (opt-in)', () => {
+  beforeEach(() => {
+    // Node 26 exposes an unconfigured localStorage accessor that shadows jsdom's.
+    const values = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => { values.set(key, value); },
+      removeItem: (key: string) => { values.delete(key); },
+    });
+  });
+
   afterEach(() => {
     delete (globalThis as { __AI_TRACE__?: boolean }).__AI_TRACE__;
-    try {
-      localStorage.removeItem('ai:trace');
-    } catch {
-      /* no-op */
-    }
+    vi.unstubAllGlobals();
   });
 
   it('is off by default', () => {

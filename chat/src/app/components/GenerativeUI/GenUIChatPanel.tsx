@@ -11,8 +11,8 @@
  *    For Phase 6, that resolves to exactly `searchRecipes`. `commitRecipeToPlan`
  *    is hidden from the model — it is only reachable via the iframe→host bridge.
  *
- * 2. Chrome 147 LanguageModel.create({ tools }) codepath is broken. We use
- *    `responseFormat: INTENT_SCHEMA` + manual dispatch loop as the workaround.
+ * 2. Chrome 157 removed native `LanguageModel.create({ tools })` auto-execution.
+ *    We use `responseConstraint` (per session.prompt() call) + manual dispatch loop.
  *    No `tools` array is passed to create().
  *
  * 3. _meta interceptor invariant — GENUI-10:
@@ -37,8 +37,8 @@ import { GEN_UI_TOOLS, setCommitListener } from '../../services/genUITools';
 import { getRecipe } from '../../services/RecipePersistence';
 
 // ---------------------------------------------------------------------------
-// responseFormat schema — constrains the model to emit JSON tool calls.
-// Mirrors the known-working schema from the codebase (flat object + toolName).
+// responseConstraint schema — passed per session.prompt() call to constrain the
+// model to emit JSON tool calls (mirrors the known-working flat-object shape).
 // ---------------------------------------------------------------------------
 const INTENT_SCHEMA = {
   type: 'object',
@@ -82,8 +82,8 @@ const THINKING_TEXT = 'Thinking…';
 // trailing text. Returns null if no valid JSON object is found.
 //
 // Three-stage parser: direct JSON.parse → fence-strip → brace-extract.
-// Root cause: Chrome 147 Canary's session.prompt() with responseFormat
-// sometimes returns JSON wrapped in code fences despite the schema constraint.
+// Even with a responseConstraint schema, the model sometimes returns JSON wrapped
+// in code fences despite the constraint.
 // ---------------------------------------------------------------------------
 function extractJsonFromResponse(raw: string): Record<string, unknown> | null {
   // 1. Try the response as-is first (happy path).
@@ -192,10 +192,9 @@ export const GenUIChatPanel: React.FC = () => {
   );
 
   // ── Mount-time session creation ──────────────────────────────────────────────
-  // Adapted from the in-page agent pattern established in the codebase:
-  //   - outputLanguage: 'en' (Chrome 147 warning suppression)
-  //   - responseFormat: INTENT_SCHEMA (schema-constrained JSON dispatch)
-  //   - NO tools array (Chrome 147 broken codepath — use responseFormat instead)
+  //   - expectedOutputs declares the output language (outputLanguage was removed in 157)
+  //   - responseConstraint is passed PER prompt() CALL (not create()) — see dispatch loop
+  //   - NO tools array (native auto-execution was removed from the Prompt API)
   //   - System prompt filters out visibility:['app'] tools (only searchRecipes listed)
   useEffect(() => {
     let cancelled = false;
@@ -213,8 +212,6 @@ export const GenUIChatPanel: React.FC = () => {
           return;
         }
         const newSession = await LanguageModel.create({
-          outputLanguage: 'en',
-          responseFormat: INTENT_SCHEMA,
           initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT }],
         });
         if (cancelled) {
@@ -296,7 +293,9 @@ export const GenUIChatPanel: React.FC = () => {
         // this structurally; this assert makes the invariant load-bearing in dev.
         console.assert(!promptText.includes('ui://'), '[GenUIChatPanel] _meta leak — promptText contains ui:// (must be stripped before session.prompt)');
 
-        const rawResponse = await session.prompt(promptText);
+        const rawResponse = await session.prompt(promptText, {
+          responseConstraint: INTENT_SCHEMA,
+        });
 
         // Remove the Thinking… message on first prompt resolution (whether tool
         // call or "done"). Idempotent — no-op if already removed by a prior iteration.

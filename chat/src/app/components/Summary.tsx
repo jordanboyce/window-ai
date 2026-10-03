@@ -11,6 +11,7 @@ import { DocsRenderer } from '../tools/DocsRenderer';
 import Tabs from './Tabs';
 import { useSEOData, seoConfigs } from '../hooks/useSEOData';
 import { useGoogleAnalytics } from '../hooks/useGoogleAnalytics';
+import { Spinner } from './Spinner';
 
 export function Summary() {
   useSEOData(seoConfigs.summary, '/summary');
@@ -107,7 +108,7 @@ export function Summary() {
 
   const typeOptions = [
     { value: 'key-points', label: 'Key Points' },
-    { value: 'tl;dr', label: 'TL;DR' },
+    { value: 'tldr', label: 'TL;DR' },
     { value: 'teaser', label: 'Teaser' },
     { value: 'headline', label: 'Headline' }
   ];
@@ -306,9 +307,13 @@ export function Summary() {
                       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Summary</h3>
                         <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 min-h-[150px] border border-gray-200 dark:border-gray-600">
-                          <div className="whitespace-pre-wrap break-words text-gray-900 dark:text-gray-100">
-                            {summary || "Summary will appear here..."}
-                          </div>
+                          {isLoading && !summary ? (
+                            <Spinner label="Summarizing on-device…" />
+                          ) : (
+                            <div className="whitespace-pre-wrap break-words text-gray-900 dark:text-gray-100">
+                              {summary || "Summary will appear here..."}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

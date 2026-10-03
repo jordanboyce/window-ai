@@ -1,9 +1,10 @@
 // Google Analytics Configuration
 export const ANALYTICS_CONFIG = {
-  // Visitor analytics is disabled for self-hosted classroom deployments.
+  // The fork is distributed without the upstream author's measurement ID.
+  // Analytics stays disabled unless a host deliberately configures its own tracking.
   GA_MEASUREMENT_ID: '',
   ENABLED: false,
-  
+
   // Debug mode for development
   DEBUG: typeof process !== 'undefined' ? process.env.NODE_ENV === 'development' : false,
   

@@ -1,8 +1,8 @@
 # Browser AI Lab — Chrome built-in AI, in your browser
 
-> An interactive showcase and developer reference for Chrome's built-in, on-device AI APIs (Gemini Nano). Every capability has live in-browser status detection, a runnable demo, and API documentation — all client-side, with no backend, no API keys, and no data leaving the machine.
+> A self-hostable showcase and developer reference for Chrome's built-in AI APIs. Core demos use on-device models without an application backend or API key; optional remote MCP, fonts, and speech recognition can make network requests.
 
-Browser AI Lab is an interactive showcase and developer reference for Chrome's built-in, on-device AI APIs. It covers the Prompt API (LanguageModel — chat, tool calling, multimodal image/audio input), Summarizer, Translator, Language Detector, Writer, Rewriter, Proofreader, on-device Embeddings (SemanticEmbedder), plus WebMCP (`document.modelContext`) and a Model Context Protocol (MCP) client — and operational guides for observability (tracing/logging) and evaluation of on-device AI. The built-in AI APIs need a recent desktop Chrome (150+) that meets the Gemini Nano hardware bar; the landing page and documentation read fine in any browser. Each capability below links to its API documentation and its live demo.
+Browser AI Lab is a self-hostable showcase and developer reference for Chrome's built-in AI APIs. It covers the Prompt API (LanguageModel — chat, tool calling, multimodal image/audio input), Summarizer, Translator, Language Detector, Writer, Rewriter, Proofreader, on-device Embeddings (SemanticEmbedder), plus WebMCP (`document.modelContext`) and a Model Context Protocol (MCP) client. Browser API availability varies by version, hardware, flags, and downloaded models; check /status on the hosted origin. The landing page and documentation work without the models. Links below are relative to this deployment.
 
 ## Capabilities
 - [Check your browser](/status): live availability of every built-in AI API in the visitor's current browser, with per-API "how to enable" flags

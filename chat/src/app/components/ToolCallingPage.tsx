@@ -20,16 +20,65 @@ interface Tool {
   enabled: boolean;
 }
 const schema = {
-    type: 'object',
-    required: ['toolName'],
-    additionalProperties: false,
-    properties: {
-      toolName: {
-        type: 'string',
-        description: 'Name of the tool that should be executed',
-      },
+  type: 'object',
+  required: ['toolName'],
+  additionalProperties: false,
+  properties: {
+    toolName: {
+      type: 'string',
+      description:
+        'Name of the tool to call next, or "done" when you are ready to give a plain-text reply.',
     },
-  };
+    args: {
+      type: 'object',
+      description: 'Arguments object for the tool (omit or use {} when toolName is "done").',
+    },
+    reply: {
+      type: 'string',
+      description:
+        'Your conversational reply to the user. Only populated when toolName is "done".',
+    },
+  },
+};
+
+// Robustly extracts a JSON object from a model response that may be wrapped in
+// markdown code fences or carry leading/trailing prose. Returns null if none.
+function extractJsonFromResponse(raw: string): Record<string, unknown> | null {
+  const trimmed = raw.trim();
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    // fall through
+  }
+  const fenceMatch = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```\s*$/);
+  if (fenceMatch) {
+    try {
+      const parsed = JSON.parse(fenceMatch[1].trim()) as unknown;
+      if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      // fall through
+    }
+  }
+  const braceMatch = trimmed.match(/\{[\s\S]*\}/);
+  if (braceMatch) {
+    try {
+      const parsed = JSON.parse(braceMatch[0]) as unknown;
+      if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      // extraction failed
+    }
+  }
+  return null;
+}
+
+const MAX_TOOL_CALLS = 8;
 const ToolCallingPage: React.FC = () => {
   useSEOData(seoConfigs.toolCalling, '/tool-calling');
 
@@ -167,25 +216,18 @@ const ToolCallingPage: React.FC = () => {
         session.destroy();
       }
 
+      // Chrome 157: `tools: [{execute}]` auto-execution was removed from the
+      // Prompt API. Instead we constrain output to the JSON dispatch schema via
+      // per-call `responseConstraint` and execute tools in host JS (manual loop).
       const newSession = await LanguageModel.create({
-        outputLanguage: 'en',
-        responseFormat: schema,
         initialPrompts: [
           {
             role: 'system',
-            content: `You are a helpful assistant with access to various tools. Use the available tools to help users with their requests. When using tools, explain what you're doing and provide clear, helpful responses based on the tool results.
-Available tools:${enabledTools
-              .map((tool) => `- ${tool.name}: ${tool.description}`)
-              .join('\n')}
-Always be helpful and use the most appropriate tool for the user's request.`,
+            content: `You are a helpful assistant with access to various tools. You respond ONLY with a single JSON object (no markdown, no code fences, no extra text) shaped as:\n{ "toolName": "<tool name or 'done'>", "args": { ... }, "reply": "<only when done>" }\n\nAvailable tools:\n${enabledTools
+              .map((tool) => `- ${tool.name}: ${tool.description}\n  inputSchema: ${JSON.stringify(tool.inputSchema)}`)
+              .join('\n')}\n\nCall ONE tool per turn and wait for its result. When the request needs no tool, or when all tool calls are complete, emit { "toolName": "done", "reply": "...your answer..." }.`,
           },
         ],
-        tools: enabledTools.map((tool) => ({
-          name: tool.name,
-          description: tool.description,
-          inputSchema: tool.inputSchema,
-          execute: tool.execute,
-        })),
       });
 
       setSession(newSession);
@@ -230,8 +272,76 @@ Always be helpful and use the most appropriate tool for the user's request.`,
     setIsLoading(true);
     addMessage(text, 'User');
     try {
-      const response = await session.prompt(text);
-      addMessage(response, 'Bot');
+      // Manual dispatch loop: prompt (JSON-constrained) → parse → execute tool
+      // in host JS → feed result back → repeat until "done" or MAX_TOOL_CALLS.
+      let promptText = text;
+      let callCount = 0;
+
+      while (callCount < MAX_TOOL_CALLS) {
+        const rawResponse = await session.prompt(promptText, {
+          responseConstraint: schema,
+        });
+
+        const parsed = extractJsonFromResponse(rawResponse);
+        if (!parsed) {
+          addMessage(rawResponse || "Sorry, I couldn't generate a response.", 'Bot');
+          break;
+        }
+
+        const toolName = typeof parsed.toolName === 'string' ? parsed.toolName : 'done';
+
+        if (toolName === 'done') {
+          const reply =
+            typeof parsed.reply === 'string' && parsed.reply.length > 0
+              ? parsed.reply
+              : 'Done. Let me know if there is anything else.';
+          addMessage(reply, 'Bot');
+          break;
+        }
+
+        const tool = availableTools.find((t) => t.name === toolName);
+        if (!tool || !tool.enabled) {
+          promptText = `Tool "${toolName}" is not available. Valid tools: ${availableTools
+            .filter((t) => t.enabled)
+            .map((t) => t.name)
+            .join(', ')}. Call a valid tool or emit { "toolName": "done", "reply": "..." }.`;
+          callCount++;
+          continue;
+        }
+
+        const args = parsed.args === undefined ? {} : parsed.args;
+        // These demo tools use flat object schemas with string/number inputs.
+        // Validate before host execution; the response constraint only checks
+        // the generic dispatch envelope, not the selected tool's arguments.
+        const validArgs = args !== null && typeof args === 'object' && !Array.isArray(args)
+          && (tool.inputSchema.required ?? []).every((name: string) => Object.prototype.hasOwnProperty.call(args, name))
+          && Object.entries(tool.inputSchema.properties as Record<string, { type: string }>).every(([name, property]) =>
+            !Object.prototype.hasOwnProperty.call(args, name)
+            || (typeof (args as Record<string, unknown>)[name] === property.type
+              && (property.type !== 'number' || Number.isFinite((args as Record<string, unknown>)[name])))
+          );
+        if (!validArgs) {
+          promptText = `Invalid arguments for tool "${toolName}". Follow its inputSchema: ${JSON.stringify(tool.inputSchema)}. Emit a corrected tool call or { "toolName": "done", "reply": "..." }.`;
+          callCount++;
+          continue;
+        }
+
+        let toolResult: string;
+        try {
+          const result = await tool.execute(args);
+          toolResult = typeof result === 'string' ? result : JSON.stringify(result);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Unknown error';
+          toolResult = JSON.stringify({ error: message });
+        }
+
+        promptText = `Tool "${toolName}" result: ${toolResult}. Now decide: call the next tool (emit the JSON), or if the request is complete emit { "toolName": "done", "reply": "..." }.`;
+        callCount++;
+      }
+
+      if (callCount >= MAX_TOOL_CALLS) {
+        addMessage('Reached the maximum number of tool calls for this request.', 'Bot');
+      }
     } catch (error) {
       console.error('Error getting AI response:', error);
       addMessage('Sorry, I encountered an error. Please try again.', 'Bot');
@@ -477,10 +587,11 @@ Always be helpful and use the most appropriate tool for the user's request.`,
                   {/* Chat Area */}
                   <div className="lg:col-span-3">
                     <div className="space-y-6">
-                      <ChatBox messages={messages} />
+                      <ChatBox messages={messages} isLoading={isLoading} />
                       <ChatInput
                         onSend={handleUserMessage}
                         disabled={isLoading}
+                        isLoading={isLoading}
                       />
                     </div>
                   </div>

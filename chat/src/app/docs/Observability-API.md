@@ -103,10 +103,10 @@ async function tracedStream(api, op, session, makeStream) {
 ### Availability + download progress
 
 ```js
-const availability = await LanguageModel.availability({ outputLanguage: 'en' });
+const availability = await LanguageModel.availability({ expectedOutputs: [{ type: 'text', languages: ['en'] }] });
 
 const session = await LanguageModel.create({
-  outputLanguage: 'en',
+  expectedOutputs: [{ type: 'text', languages: ['en'] }],
   monitor(m) {
     m.addEventListener('downloadprogress', (e) => {
       console.log('[ai] download', Math.round(e.loaded * 100) + '%');

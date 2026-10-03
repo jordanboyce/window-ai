@@ -1,18 +1,17 @@
 // Pure helpers for the /mcp-client agent loop (ChatPanel.tsx).
 //
-// Cloned from RecipeWorkbench/AgentDrawer.tsx's responseFormat-based intent
+// Cloned from RecipeWorkbench/AgentDrawer.tsx's responseConstraint-based intent
 // extraction, adapted for a REMOTE MCP server whose tool set is discovered at
 // connect() time (rather than the static RECIPE_TOOLS). No React, no DOM —
 // keep this file testable and side-effect-free.
 import type { McpToolInfo } from '../../services/McpClientService';
 
 // ---------------------------------------------------------------------------
-// responseFormat schema — constrains the model to emit JSON tool calls.
-// Mirrors AgentDrawer's INTENT_SCHEMA (the only known-working schema on
-// Chrome 147 Canary): a flat object with a required `toolName` field. `args`
-// carries the tool parameters; `toolName: "done"` is the sentinel value the
-// model emits when it has no more tool calls to make and instead wants to give
-// a conversational reply.
+// responseConstraint schema — passed per session.prompt() call to constrain the
+// model to emit JSON tool calls. Mirrors AgentDrawer's INTENT_SCHEMA: a flat
+// object with a required `toolName` field. `args` carries the tool parameters;
+// `toolName: "done"` is the sentinel value the model emits when it has no more
+// tool calls to make and instead wants to give a conversational reply.
 // ---------------------------------------------------------------------------
 export const INTENT_SCHEMA = {
   type: 'object',
@@ -46,9 +45,9 @@ export const INTENT_SCHEMA = {
 //   2. strip ```json ... ``` / ``` ... ``` fences, then parse
 //   3. brace-extract the first { ... } block, then parse
 //
-// Chrome 147 Canary's session.prompt() with responseFormat sometimes returns
-// the JSON wrapped in fences despite the schema constraint; without this the
-// bare JSON.parse throws and the raw response leaks into the chat bubble.
+// Even with a responseConstraint schema, the model sometimes returns the JSON
+// wrapped in fences despite the constraint; without this the bare JSON.parse
+// throws and the raw response leaks into the chat bubble.
 // ---------------------------------------------------------------------------
 export function extractJsonFromResponse(raw: string): Record<string, unknown> | null {
   const trimmed = raw.trim();

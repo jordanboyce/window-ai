@@ -13,6 +13,7 @@ import {
 import { DocsRenderer } from "../tools/DocsRenderer";
 import Tabs from './Tabs';
 import { useSEOData, seoConfigs } from '../hooks/useSEOData';
+import { Spinner } from './Spinner';
 
 export function WriteRewritePage() {
   useSEOData(seoConfigs.writer, '/writer');
@@ -507,9 +508,13 @@ export function WriteRewritePage() {
                           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Generated Content</h3>
                             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 min-h-[200px] border border-gray-200 dark:border-gray-600">
-                              <div className="whitespace-pre-wrap break-words text-gray-900 dark:text-gray-100">
-                                {writtenContent || "Generated content will appear here..."}
-                              </div>
+                              {isWriting && !writtenContent ? (
+                                <Spinner label="Writing on-device…" />
+                              ) : (
+                                <div className="whitespace-pre-wrap break-words text-gray-900 dark:text-gray-100">
+                                  {writtenContent || "Generated content will appear here..."}
+                                </div>
+                              )}
                             </div>
                             {writtenContent && (
                               <button
@@ -544,9 +549,13 @@ export function WriteRewritePage() {
                           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Rewritten Content</h3>
                             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 min-h-[200px] border border-gray-200 dark:border-gray-600">
-                              <div className="whitespace-pre-wrap break-words text-gray-900 dark:text-gray-100">
-                                {rewrittenContent || "Rewritten content will appear here..."}
-                              </div>
+                              {isRewriting && !rewrittenContent ? (
+                                <Spinner label="Rewriting on-device…" />
+                              ) : (
+                                <div className="whitespace-pre-wrap break-words text-gray-900 dark:text-gray-100">
+                                  {rewrittenContent || "Rewritten content will appear here..."}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </>

@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   checkTranslationAvailability, 
   detectPrimaryLanguage, 
@@ -9,6 +9,7 @@ import {
 import {DocsRenderer} from "../tools/DocsRenderer";
 import Tabs from './Tabs';
 import { useSEOData, seoConfigs } from '../hooks/useSEOData';
+import { Spinner } from './Spinner';
 
 const languages = [
   {code: 'en', name: 'English'},
@@ -25,63 +26,98 @@ const languages = [
 const TranslatePage: React.FC = () => {
   useSEOData(seoConfigs.translate, '/translate');
   
-  const [sourceText, setSourceText] = useState<string>('');
-  const [translation, setTranslation] = useState<string>('');
-  const [sourceLanguage, setSourceLanguage] = useState<string>('uk');
-  const [targetLanguage, setTargetLanguage] = useState<string>('ja');
+  const [sourceText, setSourceText] = useState('Hello! How are you today?');
+  const [translation, setTranslation] = useState('');
+  const [sourceLanguage, setSourceLanguage] = useState('en');
+  const [targetLanguage, setTargetLanguage] = useState('es');
   const [translationAbility, setTranslationAbility] = useState<AvailabilityStatus>();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [useStreaming, setUseStreaming] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [useStreaming, setUseStreaming] = useState(false);
   const selectRef = useRef<HTMLSelectElement>(null);
+  const requestId = useRef(0);
+  const availabilityRequestId = useRef(0);
+
+  const invalidateOutput = () => {
+    requestId.current += 1;
+    setIsLoading(false);
+    setTranslation('');
+    setErrorMessage('');
+  };
+
+  useEffect(() => {
+    const current = ++availabilityRequestId.current;
+    setTranslationAbility(undefined);
+    if (sourceLanguage === targetLanguage || typeof window.Translator?.availability !== 'function') {
+      setTranslationAbility('unavailable');
+      return () => { availabilityRequestId.current += 1; };
+    }
+    checkTranslationAvailability(sourceLanguage, targetLanguage)
+      .then(availability => { if (current === availabilityRequestId.current) setTranslationAbility(availability); })
+      .catch(() => { if (current === availabilityRequestId.current) setTranslationAbility('unavailable'); });
+    return () => { availabilityRequestId.current += 1; };
+  }, [sourceLanguage, targetLanguage]);
 
   const handleTranslate = async () => {
-    if (!sourceText.trim()) return;
-    
+    if (!sourceText.trim() || isLoading || !translationAbility || translationAbility === 'unavailable') return;
+    const current = ++requestId.current;
+    setTranslation('');
+    setErrorMessage('');
     setIsLoading(true);
     try {
       if (useStreaming) {
         const stream = await translateStreaming(sourceText, sourceLanguage, targetLanguage);
         const reader = stream.getReader();
-        setTranslation('');
-        
         try {
-          while (true) {
+          while (current === requestId.current) {
             const { done, value } = await reader.read();
             if (done) break;
-            setTranslation(prev => prev + value);
+            if (current === requestId.current) setTranslation(prev => prev + value);
           }
         } finally {
+          if (current !== requestId.current) await reader.cancel().catch(() => undefined);
           reader.releaseLock();
         }
       } else {
         const response = await translate(sourceText, sourceLanguage, targetLanguage);
-        setTranslation(response);
+        if (current === requestId.current) setTranslation(response);
       }
     } catch (error) {
-      console.error('Translation error:', error);
-      setTranslation('Error: ' + (error as Error).message);
+      if (current === requestId.current) setErrorMessage(error instanceof Error ? error.message : 'Translation failed. Try again.');
     } finally {
-      setIsLoading(false);
+      if (current === requestId.current) setIsLoading(false);
     }
   };
 
   const detectSourceLng = async () => {
     if (!sourceText.trim()) return;
-    
+    if (typeof window.LanguageDetector?.create !== 'function') {
+      setErrorMessage('Language detection is unavailable in this browser. Select a source language instead.');
+      return;
+    }
+    const current = requestId.current;
     try {
       const detectedLng = await detectPrimaryLanguage(sourceText);
-      setSourceLanguage(detectedLng);
+      if (current !== requestId.current) return;
+      if (languages.some(lang => lang.code === detectedLng)) setSourceLanguage(detectedLng);
+      else setErrorMessage('Could not identify a supported language. Select it manually.');
     } catch (error) {
-      console.error('Language detection error:', error);
+      if (current === requestId.current) setErrorMessage(error instanceof Error ? error.message : 'Language detection failed.');
     }
   };
 
   const checkAvailability = async () => {
+    const current = ++availabilityRequestId.current;
+    setTranslationAbility(undefined);
+    if (sourceLanguage === targetLanguage || typeof window.Translator?.availability !== 'function') {
+      setTranslationAbility('unavailable');
+      return;
+    }
     try {
       const availability = await checkTranslationAvailability(sourceLanguage, targetLanguage);
-      setTranslationAbility(availability);
-    } catch (error) {
-      console.error('Availability check error:', error);
+      if (current === availabilityRequestId.current) setTranslationAbility(availability);
+    } catch {
+      if (current === availabilityRequestId.current) setTranslationAbility('unavailable');
     }
   };
 
@@ -98,10 +134,11 @@ const TranslatePage: React.FC = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">AI Translator</h1>
-              <p className="text-gray-600 dark:text-gray-400">Powered by Chrome's Translation API</p>
+              <p className="text-gray-600 dark:text-gray-400">A real call to Chrome's Translator API; no translation is precomputed.</p>
             </div>
           </div>
         </header>
+        <p className="mb-6 text-sm text-gray-700 dark:text-gray-300">Try the prefilled sentence. Chrome handles the translation on your device after downloading the language pack if needed. If this browser cannot run it, you'll see that instead of a made-up result.</p>
 
         <Tabs 
           defaultTab="docs"
@@ -142,7 +179,7 @@ const TranslatePage: React.FC = () => {
                             ref={selectRef}
                             id="sourceLanguage"
                             value={sourceLanguage}
-                            onChange={e => setSourceLanguage(e.target.value)}
+                            onChange={e => { invalidateOutput(); setSourceLanguage(e.target.value); }}
                             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                           >
                             {languages.map(lang => (
@@ -157,7 +194,7 @@ const TranslatePage: React.FC = () => {
                           <select
                             id="targetLanguage"
                             value={targetLanguage}
-                            onChange={e => setTargetLanguage(e.target.value)}
+                            onChange={e => { invalidateOutput(); setTargetLanguage(e.target.value); }}
                             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                           >
                             {languages.map(lang => (
@@ -216,6 +253,17 @@ const TranslatePage: React.FC = () => {
                             )}
                           </span>
                         </div>
+                        <p role="status" className="text-sm text-gray-700 dark:text-gray-300">
+                          {sourceLanguage === targetLanguage
+                            ? 'Choose two different languages to translate.'
+                            : translationAbility === 'unavailable'
+                              ? 'Translator API is unavailable for this language pair in this browser. Check your browser setup or try another pair.'
+                              : translationAbility === 'downloadable' || translationAbility === 'downloading'
+                                ? 'The language pack needs to download. Click Translate and allow time for the first run.'
+                                : translationAbility === 'available'
+                                  ? 'Translator API is ready for this language pair.'
+                                  : 'Checking Translator API availability…'}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -231,13 +279,13 @@ const TranslatePage: React.FC = () => {
                         <textarea
                           id="sourceText"
                           value={sourceText}
-                          onChange={e => setSourceText(e.target.value)}
+                          onChange={e => { invalidateOutput(); setSourceText(e.target.value); }}
                           className="w-full h-40 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 resize-none"
                           placeholder="Enter text to translate..."
                         />
                         <button
                           onClick={handleTranslate}
-                          disabled={!sourceText.trim() || isLoading}
+                          disabled={!sourceText.trim() || isLoading || !translationAbility || translationAbility === 'unavailable' || sourceLanguage === targetLanguage}
                           className="mt-4 w-full bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white px-4 py-3 rounded-lg transition-colors duration-200 font-medium disabled:cursor-not-allowed"
                         >
                           {isLoading ? 'Translating...' : 'Translate'}
@@ -247,10 +295,15 @@ const TranslatePage: React.FC = () => {
                       {/* Output Area */}
                       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Translation</h3>
-                        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 min-h-[150px] border border-gray-200 dark:border-gray-600">
-                          <pre className="whitespace-pre-wrap break-words text-gray-900 dark:text-gray-100 font-sans">
-                            {translation || "Translation will appear here..."}
-                          </pre>
+                        {errorMessage && <p role="alert" className="mb-3 text-sm text-red-700 dark:text-red-300">{errorMessage}</p>}
+                        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 min-h-[150px] border border-gray-200 dark:border-gray-600" aria-live="polite">
+                          {isLoading && !translation ? (
+                            <Spinner label="Translating on-device…" />
+                          ) : (
+                            <pre className="whitespace-pre-wrap break-words text-gray-900 dark:text-gray-100 font-sans">
+                              {translation || "Translation will appear here..."}
+                            </pre>
+                          )}
                         </div>
                       </div>
                     </div>

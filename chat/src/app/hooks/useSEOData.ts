@@ -132,14 +132,14 @@ export const seoConfigs = {
   // Must match prerender-react.js seoConfigs['/mcp-client'] verbatim — single source of truth.
   mcpClient: {
     title: 'MCP Client — Chat with a remote MCP server via the built-in LLM | Chrome AI APIs',
-    description: 'Connect to a remote Model Context Protocol server over Streamable HTTP, browse its tools, and drive them from Chrome\'s built-in LLM (Gemini Nano) — a manual responseFormat agent loop, no server-side model.',
+    description: 'Connect to a remote Model Context Protocol server over Streamable HTTP, browse its tools, and drive them from Chrome\'s built-in LLM (Gemini Nano) — a manual responseConstraint agent loop, no server-side model.',
     keywords: 'MCP client, Model Context Protocol, Streamable HTTP, remote MCP server, Gemini Nano, built-in LLM, agent loop, bearer token, browser MCP, tool calling'
   },
   // Must match prerender-react.js seoConfigs['/mcp-client/docs'] verbatim.
   mcpClientDocs: {
     title: 'MCP Client API Docs — Streamable HTTP transport + agent loop | Chrome AI APIs',
-    description: 'How the browser MCP client connects over Streamable HTTP with a bearer token, lists tools, and dispatches them from a built-in-LLM responseFormat agent loop.',
-    keywords: 'MCP client docs, Model Context Protocol, StreamableHTTPClientTransport, listTools, callTool, CORS, bearer token, responseFormat agent loop, Gemini Nano'
+    description: 'How the browser MCP client connects over Streamable HTTP with a bearer token, lists tools, and dispatches them from a built-in-LLM responseConstraint agent loop.',
+    keywords: 'MCP client docs, Model Context Protocol, StreamableHTTPClientTransport, listTools, callTool, CORS, bearer token, responseConstraint agent loop, Gemini Nano'
   },
   // Must match prerender-react.js seoConfigs['/embeddings'] verbatim — single source of truth.
   embeddings: {

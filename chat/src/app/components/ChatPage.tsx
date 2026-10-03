@@ -291,8 +291,8 @@ const ChatPage: React.FC = () => {
                   {/* Chat Area */}
                   <div className="lg:col-span-3">
                     <div className="space-y-6">
-                      <ChatBox messages={messages} />
-                      <ChatInput onSend={handleUserMessage} disabled={isLoading} />
+                      <ChatBox messages={messages} isLoading={isLoading} />
+                      <ChatInput onSend={handleUserMessage} disabled={isLoading} isLoading={isLoading} />
                     </div>
                   </div>
                 </div>

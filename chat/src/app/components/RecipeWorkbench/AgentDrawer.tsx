@@ -12,12 +12,11 @@ import { getActiveRecipeId } from '../../services/recipeStore';
 import { getRecipe } from '../../services/RecipePersistence';
 
 // ---------------------------------------------------------------------------
-// responseFormat schema — constrains the model to emit JSON tool calls.
-// Mirrors the ToolCallingPage.tsx shape (the only known-working schema on
-// Chrome 147 Canary): a flat object with a required `toolName` field.
-// `args` carries the tool parameters; `toolName: "done"` is the sentinel
-// value the model emits when it has no more tool calls to make and instead
-// wants to give a conversational reply.
+// responseConstraint schema — passed per session.prompt() call to constrain the
+// model to emit JSON tool calls (flat object with a required `toolName` field).
+// `args` carries the tool parameters; `toolName: "done"` is the sentinel value
+// the model emits when it has no more tool calls to make and instead wants to
+// give a conversational reply.
 // ---------------------------------------------------------------------------
 const INTENT_SCHEMA = {
   type: 'object',
@@ -78,11 +77,11 @@ const MAX_TOOL_CALLS = 10;
 // response that may be wrapped in markdown code fences or have leading/
 // trailing text. Returns null if no valid JSON object is found.
 //
-// Root cause addressed: Chrome 147 Canary's `session.prompt()` with
-// `responseFormat` sometimes returns the JSON wrapped in ```json ... ``` fences
-// despite the schema constraint, causing JSON.parse to throw and the entire
-// raw response to be displayed as the chat bubble (B1/B4 from UAT-04 debug
-// session 2026-04-27). This helper strips fences before parsing.
+// Root cause addressed: the model sometimes returns the JSON wrapped in
+// ```json ... ``` fences despite the responseConstraint schema, causing
+// JSON.parse to throw and the entire raw response to be displayed as the chat
+// bubble (B1/B4 from UAT-04 debug session 2026-04-27). This helper strips
+// fences before parsing.
 // ---------------------------------------------------------------------------
 function extractJsonFromResponse(raw: string): Record<string, unknown> | null {
   // 1. Try the response as-is first (happy path).
@@ -136,15 +135,14 @@ interface AgentDrawerProps {
 /**
  * In-page chat drawer.
  *
- * Owns a plain `LanguageModel.create({ responseFormat: INTENT_SCHEMA, outputLanguage: 'en' })`
- * session (NO `tools` array — that codepath is broken on Chrome 147 + WebMCP).
- * Tool calls are extracted from the schema-constrained JSON response and
- * dispatched to `RECIPE_TOOLS` handlers in JavaScript, one per prompt turn.
- * This satisfies AGENT-01 ("in-page LanguageModel chat invokes the same
- * registered WebMCP tools") without touching the broken `create({ tools })`
- * codepath.
+ * Owns a `LanguageModel.create({ initialPrompts: [...] })` session with NO
+ * `tools` array (native auto-execution was removed from the Prompt API in
+ * Chrome 157). Tool calls are constrained to JSON via per-call
+ * `responseConstraint` and dispatched to `RECIPE_TOOLS` handlers in
+ * JavaScript, one per prompt turn. This satisfies AGENT-01 ("in-page
+ * LanguageModel chat invokes the same registered WebMCP tools").
  *
- * Architecture: responseFormat-based intent extraction (Approach A from the
+ * Architecture: responseConstraint-based intent extraction (Approach A from the
  * reopen debug session 2026-04-27).
  *
  * Bugs fixed (2026-04-27 continuation):
@@ -153,9 +151,8 @@ interface AgentDrawerProps {
  * - B2: Dispatch loop correctly iterates now that parse doesn't fail.
  * - B3: Active recipe ID is injected into each user turn prefix so the
  *   model never needs to guess or hallucinate a recipeId.
- * - Chrome 147 warning: outputLanguage: 'en' added to LanguageModel.create()
- *   to suppress "No output language specified" warning and ensure optimal
- *   output quality (may also reduce fence-wrapping and hallucination).
+ * - Chrome 157: outputLanguage / responseFormat removed — use expectedOutputs
+ *   + per-call responseConstraint instead.
  */
 export const AgentDrawer: React.FC<AgentDrawerProps> = (props) => {
   const {
@@ -183,10 +180,9 @@ export const AgentDrawer: React.FC<AgentDrawerProps> = (props) => {
   };
 
   // Mount-time session creation.
-  // responseFormat is used WITHOUT a `tools` array — the model emits JSON that
-  // the host JS parses and dispatches manually. outputLanguage: 'en' is required
-  // in Chrome 147+ to suppress the "No output language specified" console warning
-  // and ensure optimal output quality (JSON adherence, reduced hallucination).
+  // responseConstraint is passed PER prompt() call (see dispatch loop below),
+  // NOT at create() time, and NO tools array is used (native auto-execution was
+  // removed from the Prompt API in Chrome 157).
   useEffect(() => {
     let cancelled = false;
     let createdSession: LanguageModel | null = null;
@@ -198,13 +194,13 @@ export const AgentDrawer: React.FC<AgentDrawerProps> = (props) => {
       try {
         const availability = await LanguageModel.availability();
         if (cancelled) return;
-        if (availability !== 'available') {
+        if (availability === 'unavailable') {
           setUnavailable(true);
           return;
         }
+        // create() can install a downloadable model on first use; waiting here
+        // instead of treating "downloadable" as an unsupported browser.
         const newSession = await LanguageModel.create({
-          outputLanguage: 'en',
-          responseFormat: INTENT_SCHEMA,
           initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT }],
         });
         if (cancelled) {
@@ -265,7 +261,9 @@ export const AgentDrawer: React.FC<AgentDrawerProps> = (props) => {
       // Dispatch loop: prompt → parse → execute tool → feed result → repeat.
       // Exits when the model emits toolName "done" or MAX_TOOL_CALLS is reached.
       while (callCount < MAX_TOOL_CALLS) {
-        const rawResponse = await session.prompt(promptText);
+        const rawResponse = await session.prompt(promptText, {
+          responseConstraint: INTENT_SCHEMA,
+        });
 
         // B1/B4 fix: use extractJsonFromResponse() which strips markdown code
         // fences before JSON.parse. Previously a bare JSON.parse(rawResponse)
@@ -350,13 +348,15 @@ export const AgentDrawer: React.FC<AgentDrawerProps> = (props) => {
       <div className="flex flex-col gap-3 h-full min-h-0">
         <ToolListPanel status={registrationStatus} registeredCount={registeredCount} liveToolName={incomingLiveToolName ?? null} />
         <div className="flex-1 min-h-0 overflow-y-auto">
-          <ChatBox messages={messages} />
+          <ChatBox messages={messages} isLoading={isLoading} />
           {toolEvents.map((event, i) => (
             <ToolCallIndicator key={i} event={event} />
           ))}
         </div>
-        {unavailable && <LanguageModelUnavailable />}
-        <ChatInput onSend={handleUserMessage} disabled={isLoading || unavailable || (!session && !sessionInitFailed)} />
+        {unavailable && <LanguageModelUnavailable registrationStatus={registrationStatus} />}
+        {sessionInitFailed && <p role="alert" className="text-sm text-red-700 dark:text-red-300">The in-page assistant could not start. Reload after checking Prompt API availability; recipe browsing still works.</p>}
+        {!session && !unavailable && !sessionInitFailed && <p role="status" className="text-sm text-gray-600 dark:text-gray-300">Preparing the on-device model. The first download may take a while…</p>}
+        <ChatInput onSend={handleUserMessage} disabled={isLoading || !session} isLoading={isLoading} />
       </div>
     </div>
   );

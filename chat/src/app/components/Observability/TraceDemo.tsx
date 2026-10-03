@@ -49,7 +49,7 @@ export const TraceDemo: React.FC = () => {
     }
     (async () => {
       try {
-        const availability = await LanguageModel.availability({ outputLanguage: 'en' });
+        const availability = await LanguageModel.availability({ expectedOutputs: [{ type: 'text', languages: ['en'] }] });
         if (!cancelled) setPromptUnavailable(availability === 'unavailable');
       } catch {
         if (!cancelled) setPromptUnavailable(true);
@@ -115,9 +115,9 @@ export const TraceDemo: React.FC = () => {
         });
         stream = traceStream('translator', 'translate', t, () => t.translateStreaming(input));
       } else {
-        seenAvailability = await LanguageModel.availability({ outputLanguage: 'en' });
+        seenAvailability = await LanguageModel.availability({ expectedOutputs: [{ type: 'text', languages: ['en'] }] });
         setAvailability(seenAvailability ?? null);
-        const s = await LanguageModel.create({ outputLanguage: 'en', monitor });
+        const s = await LanguageModel.create({ expectedOutputs: [{ type: 'text', languages: ['en'] }], monitor });
         stream = traceStream('prompt', 'prompt', s, () => s.promptStreaming(input));
       }
 
@@ -167,17 +167,12 @@ export const TraceDemo: React.FC = () => {
         {promptUnavailable && (
           <MissingFlagBanner
             title="The Prompt API isn't available in this browser."
-            body="Summarizer and Translator still work here. To trace the Prompt API (Gemini Nano), use Chrome Canary or enable the flags below, then relaunch."
+            body="Summarizer and Translator still work here. On Canary, enable the Prompt API flag below and relaunch."
             flags={[
               {
                 name: 'Prompt API',
-                url: 'chrome://flags/#prompt-api-for-gemini-nano',
+                url: 'chrome://flags/#prompt-api',
                 note: 'set to "Enabled"',
-              },
-              {
-                name: 'On-device model',
-                url: 'chrome://flags/#optimization-guide-on-device-model',
-                note: 'set to "Enabled BypassPerfRequirement"',
               },
             ]}
             browserRequirement="Chrome Canary (desktop)"

@@ -24,19 +24,13 @@ A session is reusable — create one and call `embed()` repeatedly rather than r
 
 ### Setup Instructions
 
-1. **Enable the on-device model**:
-   ```
-   chrome://flags/#optimization-guide-on-device-model
-   ```
-   Set to **Enabled BypassPerfRequirement** and restart Chrome.
-
-2. **Enable the Embedding API**:
+1. **Enable the Embedding API**:
    ```
    chrome://flags/#semantic-embedder-api
    ```
    Set to **Enabled** and restart Chrome.
 
-3. **Inspect model state** (optional, useful for debugging stalled downloads):
+2. **Inspect model state** (optional, useful for debugging stalled downloads):
    ```
    chrome://on-device-internals
    ```
@@ -309,8 +303,8 @@ The model is unavailable if the flags aren't set or the download hasn't complete
 
 1. **Force the model download.** Open `chrome://components`, find **"Optimization Guide On Device Model"**, and click **Check for update**. If the version reads `0.0.0.0`, the model hasn't downloaded — the manual check kicks it off. Keep the tab open; the download can take several minutes.
 2. **Confirm the model status.** Open `chrome://on-device-internals` → **Model status** and verify the on-device model shows a non-zero version and no errors. (`embeddinggemma-300m` is a separate component from the Prompt API's Gemini Nano weights.)
-3. **Bypass the performance gate.** Set `chrome://flags/#optimization-guide-on-device-model` to **"Enabled BypassPerfRequirement"** (not plain "Enabled"), then relaunch. Plain "Enabled" leaves a hardware/performance gate that can block provisioning even when `availability()` reads `"downloadable"`.
-4. **Free up disk.** The on-device model stack needs roughly **22 GB free** on the volume holding your Chrome profile.
+3. **Check hardware eligibility.** The old `BypassPerfRequirement` flag was removed in Canary 157; review `chrome://on-device-internals` for the actual eligibility or component-download error instead.
+4. **Free up disk.** The on-device model stack needs sufficient free space on the volume holding your Chrome profile.
 5. **Unblock component updates.** VPNs, ad-blockers, and privacy extensions can block Google's component-update servers, leaving the component stuck at `0.0.0.0`. Disable them temporarily and retry.
 6. **Relaunch Chrome** and try again once the component reports a version.
 

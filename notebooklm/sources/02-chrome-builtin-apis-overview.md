@@ -117,24 +117,18 @@ The hard requirements (as of July 2026):
 
 If the device fails the bar, `availability()` returns `unavailable` and never advances. Your fallback should not assume the user can "fix" this — the answer for them is "buy a better laptop or use the cloud version".
 
-## What you'll need in `chrome://flags/` to run everything in Canary
+## Canary 157 flags for the demo machine
 
-For the talk's demo machine, set every flag below to **Enabled** (except `optimization-guide-on-device-model`, which needs **Enabled BypassPerfRequirement**):
+The following IDs appear in Chromium 157.0.8081.0's `about_flags.cc`. Enable **only what the demo needs**, then relaunch:
 
-- `#optimization-guide-on-device-model` → Enabled BypassPerfRequirement
-- `#prompt-api-for-gemini-nano`
-- `#prompt-api-for-gemini-nano-multimodal-input`
-- `#summarization-api-for-gemini-nano`
-- `#writer-api-for-gemini-nano`
-- `#rewriter-api-for-gemini-nano`
-- `#proofreader-api-for-gemini-nano`
-- `#language-detection-api`
-- `#translation-api` → Enabled without language pack limit
-- `#enable-webmcp-testing` → For local WebMCP dev (the flag was renamed; on a deployed origin, register an origin-trial token instead)
+- `chrome://flags/#prompt-api` — if `LanguageModel` is missing in this Canary profile (stable on desktop since 148).
+- `chrome://flags/#prompt-api-multimodal-input` — if image/audio input is missing.
+- `chrome://flags/#prompt-api-tool-use` — optional experimental native tool use; not required for the app's JSON-dispatch demos.
+- `chrome://flags/#writer-api`, `chrome://flags/#rewriter-api`, `chrome://flags/#proofreader-api` — developer-trial demos.
+- `chrome://flags/#semantic-embedder-api` — Embeddings demo (EPP).
+- `chrome://flags/#enable-webmcp-testing` — local WebMCP dev (a deployed origin instead needs an origin-trial token).
 
-After enabling, restart Chrome. Trigger one `create()` to start the model download. Watch progress at `chrome://on-device-internals/` (the old `chrome://components/` row was removed).
-
-Note that the stable APIs (`LanguageModel`, `Summarizer`, `Translator`, `LanguageDetector`) no longer need flags in Chrome 150 — the flags above matter only for the origin-trial/flagged surfaces (`Writer`, `Rewriter`, `Proofreader`, WebMCP) and for bypassing the perf bar on the demo machine.
+Summarizer, Translator and Language Detector are stable and need no flags. The former on-device-model performance-bypass flag and translation/language-detection flags are **gone** in Canary 157. Model eligibility and downloads are managed by Chrome; inspect `chrome://on-device-internals/` and call each API's `availability()` before creating a session.
 
 ## Summary
 

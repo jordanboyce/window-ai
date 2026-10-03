@@ -22,7 +22,7 @@ const DOT: Record<RunStatus, string> = {
 async function makeRunner(c: EvalCase): Promise<{ call: () => Promise<string>; destroy: () => void }> {
   if (c.api === 'summarizer') {
     const s = await window.Summarizer.create({
-      type: c.summaryType ?? 'tl;dr',
+      type: c.summaryType ?? 'tldr',
       format: 'plain-text',
       outputLanguage: 'en',
     });
@@ -32,7 +32,7 @@ async function makeRunner(c: EvalCase): Promise<{ call: () => Promise<string>; d
     const t = await window.Translator.create({ sourceLanguage: 'en', targetLanguage: 'es' });
     return { call: () => t.translate(c.input), destroy: () => t.destroy() };
   }
-  const s = await LanguageModel.create({ outputLanguage: 'en' });
+  const s = await LanguageModel.create({ expectedOutputs: [{ type: 'text', languages: ['en'] }] });
   return { call: () => s.prompt(c.input), destroy: () => s.destroy() };
 }
 
@@ -57,7 +57,7 @@ export const MiniEval: React.FC = () => {
     }
     (async () => {
       try {
-        const a = await LanguageModel.availability({ outputLanguage: 'en' });
+        const a = await LanguageModel.availability({ expectedOutputs: [{ type: 'text', languages: ['en'] }] });
         if (!cancelled) setPromptUnavailable(a === 'unavailable');
       } catch {
         if (!cancelled) setPromptUnavailable(true);
@@ -130,17 +130,12 @@ export const MiniEval: React.FC = () => {
       {promptUnavailable && (
         <MissingFlagBanner
           title="The Prompt API isn't available in this browser."
-          body="The Summarizer and Translator test cases still run here. To evaluate the Prompt API (Gemini Nano), use Chrome Canary or enable the flags below, then relaunch."
+          body="The Summarizer and Translator test cases still run here. On Canary, enable the Prompt API flag below and relaunch."
           flags={[
             {
               name: 'Prompt API',
-              url: 'chrome://flags/#prompt-api-for-gemini-nano',
+              url: 'chrome://flags/#prompt-api',
               note: 'set to "Enabled"',
-            },
-            {
-              name: 'On-device model',
-              url: 'chrome://flags/#optimization-guide-on-device-model',
-              note: 'set to "Enabled BypassPerfRequirement"',
             },
           ]}
           browserRequirement="Chrome Canary (desktop)"

@@ -2,7 +2,9 @@
 
 **Browser AI Lab** is a hands-on showcase of Chrome's built-in, on-device AI — the Prompt API (`LanguageModel`), `Summarizer`, `Translator` / `LanguageDetector`, `Writer` / `Rewriter`, and `Proofreader` — plus **WebMCP** (`document.modelContext`) and a Model Context Protocol reference implementation.
 
-AI processing runs **in the browser, on-device** via Chrome's built-in Gemini Nano. Prompts and results are not sent to an app backend or AI service; there are no API keys or per-request model costs.
+This fork is ready to build and host independently. The [original project's live demo](https://windowai.danduh.me) is not a deployment of this fork.
+
+Core built-in AI calls run **in the browser** without an application backend or API key. The optional remote MCP client, Google Fonts, and browser speech recognition can make network requests; do not treat the entire site as offline/private-by-design. This fork does not include the original site's analytics ID.
 
 ---
 
@@ -40,15 +42,26 @@ This is an [Nx](https://nx.dev) monorepo.
 ## Quickstart
 
 ```bash
-npm install                       # install monorepo dependencies
+npm ci                            # reproducible install (peer setting is in .npmrc)
 
-npx nx serve chat                 # demo gallery      → http://localhost:4300
+npm run serve:chat                # demo gallery      → http://localhost:4300
 npx nx serve map                  # Cross-Border Desk → http://localhost:4200
 
-npx nx build chat                 # production build of a single app
-npx nx run-many -t build lint     # build + lint everything
-npx nx run-many -t test           # run all tests (Vitest)
+npm run build:demo                # static gallery → dist/chat/
+npx nx build map                  # separate static app → dist/map/
+npm test                          # workspace Vitest tests
 ```
+
+## Host and teach from this fork
+
+1. Run `npm ci && npm run build:demo`. The built gallery in `dist/chat/` is a static SPA; host it **at the domain root** on HTTPS. Do not upload `node_modules/` or use the Nx development server as your public host.
+2. Firebase Hosting is configured in [`firebase.json`](firebase.json) to publish `dist/chat` and rewrite deep links to `index.html`. After creating your own Firebase project and logging in, deploy with `npx firebase-tools deploy --only hosting --project YOUR_PROJECT_ID`. This repository does not include Firebase credentials or a site ID.
+3. On another static host, make all unknown paths rewrite to `/index.html` (for example, Netlify's `/* /index.html 200`, or nginx's `try_files $uri $uri/ /index.html;`). Set the site's publish directory to `dist/chat`. Serving the gallery under a subpath needs corresponding router and asset-base changes.
+4. Share the HTTPS URL ending in `/status`. The **Three-minute demo path** starts with live capability checks, then translation, then a sample Recipe Workbench that can still be browsed without Gemini Nano. Each feature has an API documentation tab. Press **P** for presentation mode on a demo page; press **Esc** to exit.
+
+For the separate `map` app, run `npx nx build map` and host `dist/map/` at the root of another site with the same SPA rewrite. It has a mock/offline tier for classroom demonstrations; it is **not** a payment processor.
+
+**Before sharing:** test with the browser your audience will use. Core AI demonstrations require desktop Chrome with the relevant built-in APIs and downloaded models; some experimental demos also need flags or an origin-trial token on your deployed origin. A hosted URL does not grant those browser capabilities. The live `/status` page reports them per viewer. Initial downloads require a network connection and supported hardware. Optional SEO prerendering uses `npm run build:seo`; set `SITE_URL` to your deployment's HTTPS origin to generate canonical URLs and a sitemap. Without `SITE_URL`, it omits deployment-specific URLs.
 
 ---
 

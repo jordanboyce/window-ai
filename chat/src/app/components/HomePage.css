@@ -94,15 +94,6 @@
   color: #f8fafc;
 }
 
-.landing-social {
-  color: #94a3b8;
-  display: inline-flex;
-  align-items: center;
-}
-.landing-social:hover {
-  color: #cbd5e1;
-}
-
 /* Hero */
 .landing-hero {
   position: relative;
@@ -175,6 +166,44 @@
   color: #94a3b8;
   max-width: 600px;
   text-wrap: pretty;
+}
+
+.landing-explainer {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin-top: 32px;
+  text-align: left;
+}
+.landing-explainer > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid #26324a;
+  border-radius: 12px;
+  background: rgba(19, 28, 43, 0.76);
+  color: #aabbd0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.landing-explainer strong { color: #dbeafe; font-size: 14px; }
+.landing-why {
+  max-width: 720px;
+  margin: 22px 0 0;
+  color: #b7c7dc;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.landing-why strong { color: #f8fafc; }
+
+@media (max-width: 650px) {
+  .landing-topbar { padding: 20px; }
+  .landing-nav { gap: 14px; }
+  .landing-hero { padding: 40px 20px; }
+  .landing-explainer { grid-template-columns: 1fr; }
+  .landing-pills { padding: 0 20px 32px; }
 }
 
 .landing-cta-row {

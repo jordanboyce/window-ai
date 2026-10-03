@@ -124,16 +124,11 @@ export const MultimodalPage: React.FC = () => {
         {pageState === 'unavailable' && (
           <MissingFlagBanner
             title="Multimodal image input isn't available."
-            body="Update to Chrome 148+ stable, or enable the flags below in Chrome 146+ Canary, then reload."
+            body="Use Chrome 148+ stable, or enable the multimodal flag below in Canary and relaunch."
             flags={[
               {
-                name: 'Optimization Guide On Device',
-                url: 'chrome://flags/#optimization-guide-on-device-model',
-                note: 'set to "Enabled BypassPerfRequirement"',
-              },
-              {
                 name: 'Prompt API multimodal input',
-                url: 'chrome://flags/#prompt-api-for-gemini-nano-multimodal-input',
+                url: 'chrome://flags/#prompt-api-multimodal-input',
                 note: 'set to "Enabled"',
               },
             ]}

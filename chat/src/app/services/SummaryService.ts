@@ -3,7 +3,7 @@ export type AvailabilityStatus = "unavailable" | "downloadable" | "downloading" 
 
 // Summary options interface
 export interface SummaryOptions {
-  type?: "key-points" | "tl;dr" | "teaser" | "headline";
+  type?: "key-points" | "tldr" | "teaser" | "headline";
   format?: "markdown" | "plain-text";
   length?: "short" | "medium" | "long";
   sharedContext?: string;
@@ -126,7 +126,7 @@ export const createSummarizer = async (options?: SummaryOptions) => {
  */
 export const getSummaryAI = async (
   text: string,
-  type = "tl;dr",
+  type = "tldr",
   format = "plain-text",
   length = "medium"
 ): Promise<string> => {

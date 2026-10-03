@@ -30,7 +30,11 @@ async function safe(fn: () => Promise<string>): Promise<Avail> {
 
 async function promptCheck(): Promise<Avail> {
   if (typeof LanguageModel === 'undefined') return 'unavailable';
-  return safe(() => LanguageModel.availability({ outputLanguage: 'en' }));
+  return safe(() =>
+    LanguageModel.availability({
+      expectedOutputs: [{ type: 'text', languages: ['en'] }],
+    }),
+  );
 }
 
 // Embedding API is EPP-only (Chrome 152 Canary) and not in the shared window.ai
@@ -162,7 +166,8 @@ interface ApiEntry {
   check: () => Promise<Avail>;
 }
 
-// ── The catalog (verified against Chrome docs, July 2026 / Chrome 150) ───────
+// ── Flag IDs from Chromium 157.0.8081.0 about_flags.cc ─────────────────────
+// https://chromium.googlesource.com/chromium/src/+/refs/tags/157.0.8081.0/chrome/browser/about_flags.cc
 const CATALOG: ApiEntry[] = [
   {
     name: 'Prompt API — LanguageModel',
@@ -171,23 +176,24 @@ const CATALOG: ApiEntry[] = [
     stability: 'stable',
     since: 'Chrome 148 (web)',
     enable:
-      'No flag on Chrome 148+ — the model downloads on first use. For localhost dev or older channels, enable the two flags below.',
-    flags: [
-      'chrome://flags/#prompt-api-for-gemini-nano',
-      'chrome://flags/#optimization-guide-on-device-model',
-    ],
-    verify: "await LanguageModel.availability({ outputLanguage: 'en' })",
+      'Stable in Chrome 148+. If the API is missing in Canary, enable the Prompt API flag below and relaunch; model download happens on first use.',
+    flags: ['chrome://flags/#prompt-api'],
+    verify:
+      "await LanguageModel.availability({ expectedOutputs: [{ type: 'text', languages: ['en'] }] })",
     tryTo: { href: '/chat', label: 'Chat' },
     check: () => promptCheck(),
   },
   {
     name: 'Prompt API — Tool calling',
     blurb:
-      'Constrain the model to valid JSON (responseConstraint / responseFormat) or expose tools it can call — reliable classification, extraction and agents.',
+      'Constrain the model to emit valid JSON (responseConstraint) and dispatch tools in host JS — reliable classification, extraction and agents.',
     stability: 'stable',
     since: 'Chrome 148 (web)',
-    enable: 'Part of the Prompt API — same availability, no extra flag.',
-    verify: "await LanguageModel.availability({ outputLanguage: 'en' })",
+    enable:
+      'The demo uses responseConstraint (structured output), which is stable — no separate flag needed. Native tool auto-execution was removed from the API.',
+    flags: [],
+    verify:
+      "await LanguageModel.availability({ expectedOutputs: [{ type: 'text', languages: ['en'] }] })",
     tryTo: { href: '/tool-calling', label: 'Tool calling' },
     check: () => promptCheck(),
   },
@@ -197,7 +203,8 @@ const CATALOG: ApiEntry[] = [
       'Add image (and audio) input to a prompt with one option — “what is in this picture?”, document scanning, live webcam analysis.',
     stability: 'stable',
     since: 'Chrome 148 (web)',
-    enable: 'Part of the Prompt API — opt in with expectedInputs. No extra flag.',
+    enable: 'Stable on Chrome 148+. If multimodal input is missing in Canary, enable this experimental flag and relaunch.',
+    flags: ['chrome://flags/#prompt-api-multimodal-input'],
     verify: "await LanguageModel.availability({ expectedInputs: [{ type: 'image' }] })",
     tryTo: { href: '/multimodal', label: 'Multimodal' },
     check: () => safe(() => getMultimodalAvailability()),
@@ -243,11 +250,8 @@ const CATALOG: ApiEntry[] = [
     stability: 'flag',
     since: 'Origin trial (137→148, lapsed)',
     enable:
-      'Not stable as of Chrome 150. Enable on localhost via the flag below (+ the on-device model flag).',
-    flags: [
-      'chrome://flags/#writer-api-for-gemini-nano',
-      'chrome://flags/#optimization-guide-on-device-model',
-    ],
+      'Developer trial: enable the Writer API flag on localhost and relaunch.',
+    flags: ['chrome://flags/#writer-api'],
     verify: 'await Writer.availability()',
     tryTo: { href: '/writer', label: 'Write & Rewrite' },
     check: () => safe(() => checkWriterAvailability()),
@@ -257,8 +261,8 @@ const CATALOG: ApiEntry[] = [
     blurb: 'Transforms existing text — change tone, length or formality.',
     stability: 'flag',
     since: 'Origin trial (137→148, lapsed)',
-    enable: 'Not stable as of Chrome 150. Enable on localhost via the flag below.',
-    flags: ['chrome://flags/#rewriter-api-for-gemini-nano'],
+    enable: 'Developer trial: enable the Rewriter API flag on localhost and relaunch.',
+    flags: ['chrome://flags/#rewriter-api'],
     verify: 'await Rewriter.availability()',
     tryTo: { href: '/writer', label: 'Write & Rewrite' },
     check: () => safe(() => checkRewriterAvailability()),
@@ -269,7 +273,7 @@ const CATALOG: ApiEntry[] = [
       'Grammar and spelling corrections returned as positioned suggestions — the basis for inline, Grammarly-style UIs.',
     stability: 'flag',
     since: 'Origin trial (141→145, lapsed)',
-    enable: 'Not stable as of Chrome 150. Enable on localhost via the flag below.',
+    enable: 'Developer trial: enable the Proofreader API flag on localhost and relaunch.',
     flags: ['chrome://flags/#proofreader-api'],
     verify: "await Proofreader.availability({ expectedInputLanguages: ['en'] })",
     tryTo: { href: '/proofreader', label: 'Proofread' },
@@ -295,11 +299,8 @@ const CATALOG: ApiEntry[] = [
     stability: 'flag',
     since: 'EPP · Chrome 152 Canary',
     enable:
-      'Early Preview Program — Chrome Canary 152+ on desktop (Linux/macOS/Windows) only. Enable the flag below (+ the on-device model flag) and relaunch.',
-    flags: [
-      'chrome://flags/#semantic-embedder-api',
-      'chrome://flags/#optimization-guide-on-device-model',
-    ],
+      'Early Preview Program — Chrome Canary 152+ on desktop. Enable the flag below and relaunch.',
+    flags: ['chrome://flags/#semantic-embedder-api'],
     verify: 'await SemanticEmbedder.availability()',
     tryTo: { href: '/embeddings', label: 'Embeddings' },
     check: () => embeddingsCheck(),
@@ -317,7 +318,11 @@ const MONO_LABEL: React.CSSProperties = {
 };
 
 const FlagPill: React.FC<{ flag: string }> = ({ flag }) => (
-  <code
+  <a
+    href={flag}
+    target="_blank"
+    rel="noopener noreferrer"
+    title={`Open ${flag}`}
     style={{
       fontFamily: "'JetBrains Mono', ui-monospace, monospace",
       fontSize: '.72em',
@@ -326,10 +331,12 @@ const FlagPill: React.FC<{ flag: string }> = ({ flag }) => (
       borderRadius: '.4em',
       background: 'var(--surface2, rgba(148,163,184,.08))',
       color: 'var(--fg2, #cbd5e1)',
+      textDecoration: 'none',
+      display: 'inline-block',
     }}
   >
     {flag}
-  </code>
+  </a>
 );
 
 const ApiCard: React.FC<{ api: ApiEntry }> = ({ api }) => {

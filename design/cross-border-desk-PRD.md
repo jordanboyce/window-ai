@@ -99,7 +99,7 @@ Every current built-in AI API is load-bearing; nothing is decorative.
 |---|---|---|---|
 | Prompt API (text/image in, structured out) | Stable (148) | direct | Low. |
 | Summarizer / Translator / Language Detector | Stable | direct | Low. Desktop-only; language packs download on first use — **pre-warm before the talk**. |
-| Writer / Rewriter | OT lapsed (137->148) | localhost flag `#optimization-guide-on-device-model` | Med. Localhost demo fine; keep canned fallback text. |
+| Writer / Rewriter | Developer trial | localhost flags `#writer-api` / `#rewriter-api` | Med. Localhost demo fine; keep canned fallback text. |
 | Proofreader | OT lapsed (141->145) | localhost flag | Med. Same. |
 | WebMCP (`document.modelContext`) | OT 149->156 | flag `#enable-webmcp-testing`; origin-isolated only | Low for us — we call our own registry; no external consumer needed. |
 | Nano routing quality | — | single-hop routing, tight schemas | **High.** ~15–24% task-failure. Mitigate: few tools, sharp descriptions, deterministic chaining, pinned eval per release. |

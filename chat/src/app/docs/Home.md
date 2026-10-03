@@ -1,47 +1,20 @@
-## Enabling AI Capabilities in Chrome: Configuration and Flags Guide
+## Built-in AI setup — Chrome Canary 157
 
-### Prompt API (Chat)
+Desktop Chrome 148+ provides the Prompt API without a flag; Summarizer, Translator and Language Detector have been stable since Chrome 138. First use may download a model or language pack. Check each API with `availability()` in DevTools.
 
-1. **Chrome Flags**:
-    - Enable Gemini Nano:
-        - Navigate to `chrome://flags/#optimization-guide-on-device-model` and enable `BypassPerfRequirement`.
-    - Enable Prompt API:
-        - Navigate to `chrome://flags/#prompt-api-for-gemini-nano` and enable it.
+In Canary, if a feature is missing, open the relevant `chrome://flags` entry, set it to **Enabled**, then relaunch:
 
-2. **Model Verification**:
-    - Verify availability in Chrome DevTools with `await LanguageModel.availability();` (returns `"available"` when ready).
+| Feature | Canary flag | Availability check |
+| --- | --- | --- |
+| Prompt API | `chrome://flags/#prompt-api` | `await LanguageModel.availability({ expectedOutputs: [{ type: 'text', languages: ['en'] }] })` |
+| Multimodal input | `chrome://flags/#prompt-api-multimodal-input` | `await LanguageModel.availability({ expectedInputs: [{ type: 'image' }] })` |
+| Structured output | `chrome://flags/#prompt-api` (stable) | `session.prompt(text, { responseConstraint: schema })` |
+| Writer | `chrome://flags/#writer-api` | `await Writer.availability()` |
+| Rewriter | `chrome://flags/#rewriter-api` | `await Rewriter.availability()` |
+| Proofreader | `chrome://flags/#proofreader-api` | `await Proofreader.availability({ expectedInputLanguages: ['en'] })` |
+| Embeddings | `chrome://flags/#semantic-embedder-api` | `await SemanticEmbedder.availability()` |
+| WebMCP | `chrome://flags/#enable-webmcp-testing` | `'modelContext' in document` |
 
-### AISummarizer
+For Summarizer, use `await Summarizer.availability()`; for Language Detector, `await LanguageDetector.availability()`; for translation, `await Translator.availability({ sourceLanguage: 'en', targetLanguage: 'es' })`. Manage translation packs at `chrome://on-device-translation-internals/` and troubleshoot model downloads at `chrome://on-device-internals`.
 
-1. **Chrome Flags**:
-    - Enable Gemini Nano:
-        - Navigate to `chrome://flags/#optimization-guide-on-device-model` and enable `BypassPerfRequirement`.
-    - Enable Summarization API:
-        - Navigate to `chrome://flags/#summarization-api-for-gemini-nano` and enable it.
-
-2. **Model Setup**:
-    - Use Chrome DevTools to confirm model setup with `await Summarizer.availability();`.
-
-### Language Translation API
-
-1. **Chrome Flags**:
-    - Enable Language Detection API:
-        - Navigate to `chrome://flags/#language-detection-api` and enable it.
-    - Enable Translation API:
-        - Navigate to `chrome://flags/#translation-api` and choose the appropriate option.
-
-2. **Language Pack Management**:
-    - Use `chrome://on-device-translation-internals/` to manage language packs.
-
-### Writer and Rewriter API
-
-1. **Chrome Flags**:
-    - Enable Gemini Nano:
-        - Navigate to `chrome://flags/#optimization-guide-on-device-model` and set to `Enabled BypassPerfRequirement`.
-    - Enable Writer API:
-        - Go to `chrome://flags/#writer-api-for-gemini-nano` and enable it.
-    - Enable Rewriter API:
-        - Go to `chrome://flags/#rewriter-api-for-gemini-nano` and enable it.
-
-2. **Model Verification**:
-    - Confirm setup with `await LanguageModel.availability();` in Chrome DevTools.
+The former `BypassPerfRequirement` model flag is not present in Canary 157. Flag IDs above were checked against Chromium's `about_flags.cc` for version 157.0.8081.0; check the current `chrome://flags` UI when your Canary updates.

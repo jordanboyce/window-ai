@@ -7,7 +7,7 @@ Pass `expectedInputs: [{ type: 'image' }, { type: 'text' }]` to `LanguageModel.c
 ## Availability
 
 - **Stable since Chrome 148** on the open web (desktop, capable GPU). The whole Prompt API — including multimodal image/audio input via `expectedInputs` and structured output — is now stable on the open web; it is **no longer extensions-only**. No flag needed. Current stable at time of writing is **Chrome 150**.
-- **Pre-148 Canary** used `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` — no longer needed on stable.
+- **Canary 157** still lists `chrome://flags/#prompt-api-multimodal-input` for experimental access if this feature is unavailable; no extra flag is needed on supported stable builds.
 - **Not available** on iOS, Android, ChromeOS.
 
 Check before assuming:
